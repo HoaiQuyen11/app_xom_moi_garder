@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/model/cart_item_model.dart';
+import 'package:xommoigarden/model/option_item_model.dart';
 import 'package:xommoigarden/model/product_model.dart';
 
 
@@ -58,29 +59,51 @@ class ControllerCart extends GetxController {
   }
 
   // Thêm vào giỏ hàng
-  Future<void> addToCart(ProductModel product, int quantity) async {
+  Future<void> addToCart(
+    ProductModel product,
+    int quantity, {
+    List<OptionItem>? selectedOptions,
+  }) async {
     if (!authController.isLoggedIn) {
       Get.toNamed('/pages');
       return;
     }
 
     try {
-      // Kiểm tra sản phẩm đã có trong giỏ chưa
-      final existingItem = cartItems.firstWhereOrNull(
-              (item) => item.productId == product.id
-      );
+      final hasOptions = selectedOptions != null && selectedOptions.isNotEmpty;
 
-      if (existingItem != null) {
-        // Cập nhật số lượng
-        await updateQuantity(existingItem, existingItem.quantity + quantity);
-      } else {
-        // Thêm mới
-        await supabase.from('cart_items').insert({
-          'user_id': authController.currentUser.value!.id,
-          'product_id': product.id,
-          'quantity': quantity,
-          'price_at_time': product.price,
-        });
+      // Nếu sản phẩm không có option → merge vào item cũ (nếu tồn tại và cũng không có option)
+      if (!hasOptions) {
+        final existingItem = cartItems.firstWhereOrNull(
+          (item) => item.productId == product.id &&
+              (item.options == null || item.options!.isEmpty),
+        );
+
+        if (existingItem != null) {
+          await updateQuantity(existingItem, existingItem.quantity + quantity);
+          return;
+        }
+      }
+
+      // Insert cart_item mới
+      final cartItemRes = await supabase.from('cart_items').insert({
+        'user_id': authController.currentUser.value!.id,
+        'product_id': product.id,
+        'quantity': quantity,
+        'price_at_time': product.price,
+      }).select().single();
+
+      final cartItemId = cartItemRes['id'];
+
+      // Insert cart_item_options (nếu có)
+      if (hasOptions) {
+        for (var opt in selectedOptions) {
+          await supabase.from('cart_item_options').insert({
+            'cart_item_id': cartItemId,
+            'option_item_id': opt.id,
+            'option_group_id': opt.groupId,
+          });
+        }
       }
 
       await fetchCart();

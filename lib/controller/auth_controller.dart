@@ -2,6 +2,7 @@
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:xommoigarden/model/user_model.dart';
+import 'package:xommoigarden/views/user/my_home_page.dart';
 
 
 class ControllerAuth extends GetxController {
@@ -109,7 +110,7 @@ class ControllerAuth extends GetxController {
   Future<void> logout() async {
     await supabase.auth.signOut();
     currentUser.value = null;
-    Get.offAllNamed('/pages');
+    Get.offAll(() => const MyHomePage());
     Get.snackbar('Thành công', 'Đã đăng xuất');
   }
 

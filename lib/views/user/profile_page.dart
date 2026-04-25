@@ -191,10 +191,10 @@ class ProfilePage extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildMenuTile(
-                            icon: Icons.history,
+                            icon: Icons.receipt_long_outlined,
                             label: 'Lịch sử đơn hàng',
                             onTap: () {
-                              Get.to(() =>  OrderHistoryPage());
+                              Get.to(() => const OrderHistoryPage());
                             },
                           ),
                           _buildDivider(),

@@ -1,4 +1,4 @@
-// lib/views/user/login_page.dart
+// lib/views/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,151 +27,234 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          "Đăng nhập",
-          style: TextStyle(
-            color: primaryColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-          ),
-        ),
+      backgroundColor: Colors.grey.shade50,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 900;
+          return isWide ? _buildWideLayout() : _buildNarrowLayout();
+        },
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(
-            child: Card(
-              elevation: 6,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+    );
+  }
+
+  // ==================== MOBILE / TABLET ====================
+  Widget _buildNarrowLayout() {
+    return SafeArea(
+      child: Stack(
+        children: [
+          // Back button
+          Positioned(
+            top: 8,
+            left: 8,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Get.back(),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: _buildFormCard(),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================== DESKTOP / WEB ====================
+  Widget _buildWideLayout() {
+    return Row(
+      children: [
+        // Left branding
+        Expanded(
+          flex: 5,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primaryColor, Colors.green.shade900],
+              ),
+            ),
+            child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(48),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.storefront_rounded, color: primaryColor, size: 60),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Xóm mới GarDen",
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 64),
+                    ),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Xóm Mới Garden',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
+                        color: Colors.white,
+                        fontSize: 38,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Email field
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tươi mới mỗi ngày — giao tận nhà',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 17,
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Password field
-                    Obx(() => TextField(
-                      controller: passwordController,
-                      obscureText: isPasswordHidden.value,
-                      decoration: InputDecoration(
-                        labelText: 'Mật khẩu',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            isPasswordHidden.value
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          onPressed: () {
-                            isPasswordHidden.toggle();
-                          },
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                      ),
-                    )),
-                    const SizedBox(height: 24),
-
-                    // Login button
-                    Obx(() => ElevatedButton(
-                      onPressed: isLoading.value
-                          ? null
-                          : () => _handleLogin(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: isLoading.value
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                          : const Text(
-                        'Đăng nhập',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    )),
-                    const SizedBox(height: 16),
-
-                    // Register link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Chưa có tài khoản? ',
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Get.to(() => const RegisterPage());
-                          },
-                          child: Text(
-                            'Đăng ký ngay',
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    const SizedBox(height: 40),
+                    _brandFeature(Icons.local_shipping, 'Giao nhanh trong 30 phút'),
+                    const SizedBox(height: 14),
+                    _brandFeature(Icons.eco_outlined, 'Sản phẩm tươi sạch'),
+                    const SizedBox(height: 14),
+                    _brandFeature(Icons.support_agent, 'Hỗ trợ 24/7'),
                   ],
                 ),
               ),
             ),
           ),
         ),
+        // Right form
+        Expanded(
+          flex: 4,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 440),
+                child: _buildFormCard(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _brandFeature(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+        const SizedBox(width: 12),
+        Text(
+          text,
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 15),
+        ),
+      ],
+    );
+  }
+
+  // ==================== FORM CARD ====================
+  Widget _buildFormCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.storefront_rounded, color: primaryColor, size: 56),
+            const SizedBox(height: 12),
+            Text(
+              'Đăng nhập',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Chào mừng quay lại!',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: _inputDecoration('Email', Icons.email_outlined),
+            ),
+            const SizedBox(height: 14),
+
+            Obx(() => TextField(
+                  controller: passwordController,
+                  obscureText: isPasswordHidden.value,
+                  decoration: _inputDecoration(
+                    'Mật khẩu',
+                    Icons.lock_outline,
+                    suffixIcon: IconButton(
+                      icon: Icon(isPasswordHidden.value ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => isPasswordHidden.toggle(),
+                    ),
+                  ),
+                )),
+            const SizedBox(height: 22),
+
+            Obx(() => SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: isLoading.value ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                          )
+                        : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                )),
+            const SizedBox(height: 14),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Chưa có tài khoản? ', style: TextStyle(color: Colors.grey.shade600)),
+                TextButton(
+                  onPressed: () => Get.to(() => const RegisterPage()),
+                  child: Text(
+                    'Đăng ký ngay',
+                    style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryColor, width: 1.5),
+      ),
+      filled: true,
+      fillColor: Colors.grey.shade50,
+    );
+  }
+
+  // ==================== HANDLERS ====================
   Future<void> _handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
@@ -180,20 +263,17 @@ class _LoginPageState extends State<LoginPage> {
       Get.snackbar('Lỗi', 'Vui lòng nhập email');
       return;
     }
-
     if (password.isEmpty) {
       Get.snackbar('Lỗi', 'Vui lòng nhập mật khẩu');
       return;
     }
 
     isLoading.value = true;
-
     try {
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: email,
         password: password,
       );
-
       if (response.user != null) {
         await _handleLoginSuccess(response.user!.id, email);
       }
@@ -213,7 +293,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLoginSuccess(String userId, String email) async {
     try {
-      // Kiểm tra user đã có trong bảng users chưa
       final existingUser = await Supabase.instance.client
           .from('users')
           .select()
@@ -221,7 +300,6 @@ class _LoginPageState extends State<LoginPage> {
           .maybeSingle();
 
       if (existingUser == null) {
-        // Tạo user mới nếu chưa có
         await Supabase.instance.client.from('users').insert({
           'id': userId,
           'email': email,
@@ -236,7 +314,6 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
 
-      // Lấy thông tin user
       final userData = await Supabase.instance.client
           .from('users')
           .select()

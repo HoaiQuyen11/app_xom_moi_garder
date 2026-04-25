@@ -473,8 +473,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       elevation: 0,
                     ),
                     onPressed: () async {
+                      // Gom tất cả option đã chọn
+                      final List<OptionItem> selectedOptions = [];
+                      for (var op in selectedSingle.values) {
+                        if (op != null) selectedOptions.add(op);
+                      }
+                      for (var setOp in selectedMulti.values) {
+                        selectedOptions.addAll(setOp);
+                      }
+
                       // Thêm vào giỏ hàng
-                      await cartController.addToCart(widget.product, quantity);
+                      await cartController.addToCart(
+                        widget.product,
+                        quantity,
+                        selectedOptions: selectedOptions,
+                      );
 
                       // Quay lại trang trước
                       if (widget.scrollController != null) {
@@ -482,16 +495,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       } else {
                         Get.back();
                       }
-
-                      // Hiển thị thông báo
-                      Get.snackbar(
-                        'Thành công',
-                        'Đã thêm ${widget.product.name} vào giỏ hàng',
-                        snackPosition: SnackPosition.TOP,
-                        duration: const Duration(seconds: 2),
-                        backgroundColor: Colors.green,
-                        colorText: Colors.white,
-                      );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

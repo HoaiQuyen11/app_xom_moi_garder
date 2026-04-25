@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:xommoigarden/controller/admin_controller.dart';
+import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/model/enums.dart';
 import 'package:xommoigarden/views/admin/admin_categories.dart';
 
@@ -91,10 +92,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     icon: const Icon(Icons.notifications),
                     onPressed: () {},
                   ),
-                  PopupMenuButton(
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(child: Text('Thông tin cá nhân')),
-                      const PopupMenuItem(child: Text('Đăng xuất')),
+                  PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'logout') {
+                        await Get.find<ControllerAuth>().logout();
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(Icons.person_outline, size: 20),
+                            SizedBox(width: 10),
+                            Text('Thông tin cá nhân'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout, size: 20, color: Colors.red),
+                            SizedBox(width: 10),
+                            Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ],

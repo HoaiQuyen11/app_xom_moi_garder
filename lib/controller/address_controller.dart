@@ -62,4 +62,36 @@ class ControllerAddress extends GetxController {
       Get.snackbar('Lỗi', 'Không thể thêm địa chỉ');
     }
   }
+
+  Future<void> setDefaultAddress(String addressId) async {
+    if (!authController.isLoggedIn) return;
+    try {
+      final userId = authController.currentUser.value!.id;
+      // Bỏ mặc định tất cả địa chỉ của user
+      await supabase
+          .from('addresses')
+          .update({'is_default': false})
+          .eq('user_id', userId);
+      // Set địa chỉ được chọn
+      await supabase
+          .from('addresses')
+          .update({'is_default': true})
+          .eq('id', addressId);
+      await fetchAddresses();
+    } catch (e) {
+      print('Error setting default address: $e');
+    }
+  }
+
+  Future<bool> deleteAddress(String addressId) async {
+    try {
+      await supabase.from('addresses').delete().eq('id', addressId);
+      await fetchAddresses();
+      Get.snackbar('Thành công', 'Đã xóa địa chỉ');
+      return true;
+    } catch (e) {
+      Get.snackbar('Lỗi', 'Không thể xóa địa chỉ (có thể đang dùng cho đơn hàng)');
+      return false;
+    }
+  }
 }

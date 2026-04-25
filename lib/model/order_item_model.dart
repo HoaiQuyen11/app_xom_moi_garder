@@ -1,4 +1,5 @@
 // lib/models/order_item_model.dart
+import 'order_item_option_model.dart';
 import 'product_model.dart';
 
 class OrderItemModel {
@@ -10,6 +11,7 @@ class OrderItemModel {
 
   // Dữ liệu join
   ProductModel? product;
+  List<OrderItemOption>? options;
 
   OrderItemModel({
     required this.id,
@@ -18,6 +20,7 @@ class OrderItemModel {
     required this.quantity,
     required this.price,
     this.product,
+    this.options,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +32,11 @@ class OrderItemModel {
       price: (json['price'] as num).toDouble(),
       product: json['products'] != null
           ? ProductModel.fromJson(json['products'])
+          : null,
+      options: json['order_item_options'] != null
+          ? (json['order_item_options'] as List)
+              .map((opt) => OrderItemOption.fromJson(opt))
+              .toList()
           : null,
     );
   }
@@ -43,8 +51,24 @@ class OrderItemModel {
     };
   }
 
-  // Tính tổng tiền của item này
-  double get subtotal => price * quantity;
+  // Tính tổng tiền của item này (bao gồm options)
+  double get subtotal {
+    double optionsPrice = 0;
+    if (options != null) {
+      for (var opt in options!) {
+        optionsPrice += opt.optionPriceAdjustment;
+      }
+    }
+    return (price + optionsPrice) * quantity;
+  }
+
+  // Text mô tả options
+  String get optionsText {
+    if (options == null || options!.isEmpty) return '';
+    return options!.map((opt) => opt.optionName).join(', ');
+  }
+
+  bool get hasOptions => options != null && options!.isNotEmpty;
 
   // Format giá
   String get formattedPrice => '${price.toStringAsFixed(0)}đ';

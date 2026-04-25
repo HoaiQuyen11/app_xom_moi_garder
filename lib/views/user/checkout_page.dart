@@ -1,14 +1,19 @@
 // lib/views/user/checkout_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:xommoigarden/config/shop_config.dart';
 import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/controller/cart_controller.dart';
 import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/controller/address_controller.dart';
 import 'package:xommoigarden/model/address_model.dart';
 import 'package:xommoigarden/model/enums.dart';
+import 'package:xommoigarden/services/map_service.dart';
 import 'add_address_page.dart';
 import 'order_success_page.dart';
+import 'select_address_page.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -31,22 +36,80 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   final TextEditingController noteController = TextEditingController();
 
+  // Map/route state
+  RouteResult? routeResult;
+  bool isLoadingRoute = false;
+
   @override
   void initState() {
     super.initState();
-    addressController.fetchAddresses();
+    _loadAddresses();
   }
 
-  double get subtotal {
-    return cartController.totalAmount;
+  Future<void> _loadAddresses() async {
+    await addressController.fetchAddresses();
+    if (!mounted) return;
+
+    // Tự chọn địa chỉ mặc định
+    if (selectedAddress == null && addressController.addresses.isNotEmpty) {
+      final defaultAddr = addressController.addresses
+              .firstWhereOrNull((a) => a.isDefault) ??
+          addressController.addresses.first;
+      setState(() => selectedAddress = defaultAddr);
+      _fetchRoute(defaultAddr);
+    }
   }
+
+  Future<void> _pickAddress() async {
+    final result = await Get.to<AddressModel>(
+      () => SelectAddressPage(currentSelected: selectedAddress),
+    );
+    if (result != null) {
+      setState(() => selectedAddress = result);
+      _fetchRoute(result);
+    }
+  }
+
+  double get subtotal => cartController.totalAmount;
 
   double get shippingFee {
+    if (routeResult != null) {
+      return MapService.calculateShippingFee(
+        routeResult!.distanceKm,
+        isFast: selectedShippingMethod == ShippingMethod.fast,
+      );
+    }
     return selectedShippingMethod.fee;
   }
 
-  double get total {
-    return subtotal + shippingFee;
+  double get total => subtotal + shippingFee;
+
+  String _shippingFeeLabel(ShippingMethod method) {
+    if (routeResult != null) {
+      final fee = MapService.calculateShippingFee(
+        routeResult!.distanceKm,
+        isFast: method == ShippingMethod.fast,
+      );
+      return '${fee.toStringAsFixed(0)}đ · ${routeResult!.distanceKm.toStringAsFixed(1)} km';
+    }
+    return '${method.fee.toStringAsFixed(0)}đ (tạm tính)';
+  }
+
+  Future<void> _fetchRoute(AddressModel address) async {
+    if (address.lat == null || address.lng == null) {
+      setState(() => routeResult = null);
+      return;
+    }
+
+    setState(() => isLoadingRoute = true);
+    final result = await MapService.getRoute(
+      ShopConfig.location,
+      LatLng(address.lat!, address.lng!),
+    );
+    setState(() {
+      routeResult = result;
+      isLoadingRoute = false;
+    });
   }
 
   @override
@@ -77,6 +140,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDeliveryInfo(),
+              if (selectedAddress != null && selectedAddress!.lat != null) _buildRouteMap(),
               _buildShippingMethod(),
               _buildPaymentMethod(),
               _buildOrderItems(),
@@ -124,43 +188,89 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildDeliveryInfo() {
+    final user = authController.currentUser.value;
+
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 1)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Thông tin nhận hàng',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+          // Header
+          Row(
+            children: [
+              const Text(
+                'Thông tin nhận hàng',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: _pickAddress,
+                child: Text(
+                  'Thay đổi',
+                  style: TextStyle(
+                    color: Colors.green.shade700,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
 
-          if (addressController.addresses.isEmpty)
-            _buildEmptyAddress()
+          const SizedBox(height: 10),
+
+          // Content
+          if (selectedAddress == null)
+            _buildNoAddress()
           else
-            _buildAddressList(),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name + phone
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(
+                        text: user?.fullName ?? 'Khách hàng',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      TextSpan(
+                        text: '  -  ',
+                        style: TextStyle(color: Colors.grey.shade500),
+                      ),
+                      TextSpan(
+                        text: user?.phone ?? '---',
+                        style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Address
+                Text(
+                  selectedAddress!.fullAddress,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                ),
+              ],
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyAddress() {
+  Widget _buildNoAddress() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(12),
@@ -170,14 +280,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.grey),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  authController.currentUser.value?.fullName ?? 'Chưa có địa chỉ',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
+              Icon(Icons.location_off, color: Colors.grey.shade500, size: 20),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Chưa có địa chỉ giao hàng', style: TextStyle(fontSize: 14))),
             ],
           ),
         ),
@@ -185,71 +290,147 @@ class _CheckoutPageState extends State<CheckoutPage> {
         TextButton.icon(
           onPressed: () async {
             await Get.to(() => const AddAddressPage());
-            addressController.fetchAddresses();
+            await _loadAddresses();
           },
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Thêm địa chỉ giao hàng'),
-          style: TextButton.styleFrom(foregroundColor: Colors.green),
+          style: TextButton.styleFrom(foregroundColor: Colors.green.shade700),
         ),
       ],
     );
   }
 
-  Widget _buildAddressList() {
-    return Column(
-      children: [
-        ...addressController.addresses.map((address) {
-          final isSelected = selectedAddress?.id == address.id;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? Colors.green : Colors.grey.shade200,
-                width: isSelected ? 1.5 : 1,
-              ),
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildRouteMap() {
+    final customer = LatLng(selectedAddress!.lat!, selectedAddress!.lng!);
+    final bounds = LatLngBounds.fromPoints([ShopConfig.location, customer]);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 1)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(Icons.map, color: Colors.green.shade700),
+                const SizedBox(width: 8),
+                const Text(
+                  'Đường đi giao hàng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                if (isLoadingRoute)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
             ),
-            child: RadioListTile<AddressModel>(
-              title: Text(
-                authController.currentUser.value?.fullName ?? 'Khách hàng',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+            child: SizedBox(
+              height: 220,
+              child: Stack(
                 children: [
-                  Text(
-                    authController.currentUser.value?.phone ?? '',
-                    style: const TextStyle(fontSize: 12),
+                  FlutterMap(
+                    options: MapOptions(
+                      initialCameraFit: CameraFit.bounds(
+                        bounds: bounds,
+                        padding: const EdgeInsets.all(40),
+                      ),
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                      ),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.xommoigarden.app',
+                      ),
+                      if (routeResult != null)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: routeResult!.polyline,
+                              strokeWidth: 4,
+                              color: Colors.green.shade700,
+                            ),
+                          ],
+                        ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: ShopConfig.location,
+                            width: 44,
+                            height: 44,
+                            child: const Icon(Icons.store, color: Colors.orange, size: 36),
+                          ),
+                          Marker(
+                            point: customer,
+                            width: 44,
+                            height: 44,
+                            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    address.fullAddress,
-                    style: const TextStyle(fontSize: 13),
-                  ),
+                  // Info overlay
+                  if (routeResult != null)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.near_me, size: 16, color: Colors.green.shade700),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${routeResult!.distanceKm.toStringAsFixed(1)} km',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(width: 16),
+                            Icon(Icons.access_time, size: 16, color: Colors.blue.shade700),
+                            const SizedBox(width: 6),
+                            Text(
+                              '~${routeResult!.durationMinutes.toStringAsFixed(0)} phút',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                            const Spacer(),
+                            if (!MapService.isDeliverable(routeResult!.distanceKm))
+                              Text(
+                                'Ngoài vùng giao',
+                                style: TextStyle(fontSize: 12, color: Colors.red.shade700, fontWeight: FontWeight.w600),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
-              value: address,
-              groupValue: selectedAddress,
-              onChanged: (value) {
-                setState(() {
-                  selectedAddress = value;
-                });
-              },
-              activeColor: Colors.green,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
-          );
-        }),
-        TextButton.icon(
-          onPressed: () async {
-            await Get.to(() => const AddAddressPage());
-            addressController.fetchAddresses();
-          },
-          icon: const Icon(Icons.add_location, size: 18),
-          label: const Text('Thêm địa chỉ mới'),
-          style: TextButton.styleFrom(foregroundColor: Colors.green),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -281,30 +462,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
           const SizedBox(height: 12),
           RadioListTile<ShippingMethod>(
             title: const Text('Giao hàng tiêu chuẩn'),
-            subtitle: Text('${ShippingMethod.standard.fee.toStringAsFixed(0)}đ'),
+            subtitle: Text(_shippingFeeLabel(ShippingMethod.standard)),
             value: ShippingMethod.standard,
             groupValue: selectedShippingMethod,
             onChanged: (value) {
-              setState(() {
-                selectedShippingMethod = value!;
-              });
+              setState(() => selectedShippingMethod = value!);
             },
             activeColor: Colors.green,
             contentPadding: EdgeInsets.zero,
           ),
           RadioListTile<ShippingMethod>(
             title: const Text('FAST Giao Tiết Kiệm'),
-            subtitle: Text('${ShippingMethod.fast.fee.toStringAsFixed(0)}đ'),
+            subtitle: Text(_shippingFeeLabel(ShippingMethod.fast)),
             value: ShippingMethod.fast,
             groupValue: selectedShippingMethod,
             onChanged: (value) {
-              setState(() {
-                selectedShippingMethod = value!;
-              });
+              setState(() => selectedShippingMethod = value!);
             },
             activeColor: Colors.green,
             contentPadding: EdgeInsets.zero,
           ),
+          if (routeResult == null && selectedAddress != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Phí tạm tính — chọn địa chỉ có GPS để tính phí thật',
+                style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+              ),
+            ),
         ],
       ),
     );
@@ -635,6 +820,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
             return;
           }
 
+          if (routeResult != null && !MapService.isDeliverable(routeResult!.distanceKm)) {
+            Get.snackbar(
+              'Lỗi',
+              'Địa chỉ giao hàng vượt quá bán kính ${ShopConfig.maxDistanceKm.toStringAsFixed(0)} km',
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+            return;
+          }
+
           // Hiển thị dialog xác nhận
           final confirm = await Get.dialog<bool>(
             AlertDialog(
@@ -673,6 +868,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
             addressId: selectedAddress!.id,
             paymentMethod: selectedPaymentMethod,
             shippingMethod: selectedShippingMethod,
+            shippingFee: shippingFee,
             note: note,
           );
 

@@ -59,8 +59,8 @@ class OrderModel {
       paymentMethod: PaymentMethod.fromString(json['payment_method'] ?? 'cod'),
       paymentStatus: PaymentStatus.fromString(json['payment_status'] ?? 'pending'),
       createdAt: DateTime.parse(json['created_at'] as String),
-      customer: json['users'] != null
-          ? UserModel.fromJson(json['users'])
+      customer: (json['customer'] ?? json['users']) != null
+          ? UserModel.fromJson(json['customer'] ?? json['users'])
           : null,
       address: json['addresses'] != null
           ? AddressModel.fromJson(json['addresses'])

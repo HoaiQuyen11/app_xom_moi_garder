@@ -61,6 +61,7 @@ class ControllerOrder extends GetxController {
     required String addressId,
     required PaymentMethod paymentMethod,
     required ShippingMethod shippingMethod,
+    double? shippingFee,
     String note = '',
   }) async {
     // Kiểm tra giỏ hàng
@@ -86,14 +87,14 @@ class ControllerOrder extends GetxController {
 
       // Tính toán giá trị
       double subtotal = cartController.totalAmount;
-      double shippingFee = shippingMethod.fee;
-      double totalAmount = subtotal + shippingFee;
+      double finalShippingFee = shippingFee ?? shippingMethod.fee;
+      double totalAmount = subtotal + finalShippingFee;
 
       print('=== TẠO ĐƠN HÀNG ===');
       print('User ID: ${authController.currentUser.value!.id}');
       print('Address ID: $addressId');
       print('Subtotal: $subtotal');
-      print('Shipping Fee: $shippingFee');
+      print('Shipping Fee: $finalShippingFee');
       print('Total: $totalAmount');
       print('Payment Method: ${paymentMethod.value}');
       print('Shipping Method: ${shippingMethod.value}');
@@ -104,7 +105,7 @@ class ControllerOrder extends GetxController {
         'user_id': authController.currentUser.value!.id,
         'address_id': addressId,
         'total_amount': totalAmount,
-        'shipping_fee': shippingFee,
+        'shipping_fee': finalShippingFee,
         'shipping_method': shippingMethod.value,
         'note': note,
         'payment_method': paymentMethod.value,
@@ -123,7 +124,7 @@ class ControllerOrder extends GetxController {
       final orderId = orderResponse['id'];
       print('Order created with ID: $orderId');
 
-      // Tạo order items
+      // Tạo order items + options
       for (var item in cartController.cartItems) {
         final orderItemData = {
           'order_id': orderId,
@@ -134,7 +135,30 @@ class ControllerOrder extends GetxController {
 
         print('Order Item Data: $orderItemData');
 
-        await supabase.from('order_items').insert(orderItemData);
+        final orderItemRes = await supabase
+            .from('order_items')
+            .insert(orderItemData)
+            .select()
+            .single();
+
+        final orderItemId = orderItemRes['id'];
+
+        // Lưu options nếu có (lỗi ở đây không làm hỏng đơn hàng)
+        if (item.options != null && item.options!.isNotEmpty) {
+          for (var opt in item.options!) {
+            try {
+              await supabase.from('order_item_options').insert({
+                'order_item_id': orderItemId,
+                'option_item_id': opt.optionItemId,
+                'option_group_id': opt.optionGroupId,
+                'option_name': opt.optionItem?.name ?? '',
+                'option_price_adjustment': opt.optionItem?.priceAdjustment ?? 0,
+              });
+            } catch (e) {
+              print('WARN: Không lưu được option ${opt.optionItemId}: $e');
+            }
+          }
+        }
       }
 
       // Xóa giỏ hàng
@@ -181,19 +205,29 @@ class ControllerOrder extends GetxController {
   Future<void> fetchOrderDetail(String orderId) async {
     try {
       isLoading.value = true;
+      currentOrder.value = null;
+      orderItems.clear();
 
       final orderResponse = await supabase
           .from('orders')
-          .select('*, addresses(*), users!shipper_id(*)')
+          .select(
+            '*, addresses(*), '
+            'customer:users!user_id(*), '
+            'shipper:users!shipper_id(*)',
+          )
           .eq('id', orderId)
           .single();
+
+      print('Order detail response: $orderResponse');
 
       currentOrder.value = OrderModel.fromJson(orderResponse);
 
       final itemsResponse = await supabase
           .from('order_items')
-          .select('*, products(*)')
+          .select('*, products(*), order_item_options(*)')
           .eq('order_id', orderId);
+
+      print('Order items response: $itemsResponse');
 
       orderItems.value = (itemsResponse as List)
           .map((json) => OrderItemModel.fromJson(json))
@@ -201,6 +235,13 @@ class ControllerOrder extends GetxController {
 
     } catch (e) {
       print('Error fetching order detail: $e');
+      Get.snackbar(
+        'Lỗi',
+        'Không tải được chi tiết đơn: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+      );
     } finally {
       isLoading.value = false;
     }

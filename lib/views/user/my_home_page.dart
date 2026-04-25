@@ -13,8 +13,8 @@ import 'package:xommoigarden/views/widgets/product_quantity_control.dart';
 import 'product_detail_page.dart';
 
 import 'cart_page.dart';
-import 'profile_page.dart';
 import 'order_history_page.dart';
+import 'profile_page.dart';
 
 
 class MyHomePage extends StatefulWidget {
@@ -377,15 +377,20 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             child: SingleChildScrollView(
               controller: _scrollController,
-              child: Column(
-                children: [
-                  _buildCoverWithStoreInfo(),
-                  const SizedBox(height: 150),
-                  _buildFeaturedSection(),
-                  _buildCategoryTabBar(),
-                  _buildProductSections(),
-                  const SizedBox(height: 120),
-                ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: Column(
+                    children: [
+                      _buildCoverWithStoreInfo(),
+                      const SizedBox(height: 150),
+                      _buildFeaturedSection(),
+                      _buildCategoryTabBar(),
+                      _buildProductSections(),
+                      const SizedBox(height: 120),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -444,8 +449,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             if (authController.isLoggedIn)
               ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text("Đơn hàng của tôi"),
+                leading: const Icon(Icons.receipt_long_outlined),
+                title: const Text("Lịch sử đơn hàng"),
                 onTap: () {
                   Navigator.pop(context);
                   Get.to(() => OrderHistoryPage());
