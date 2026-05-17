@@ -42,15 +42,6 @@ class _LoginPageState extends State<LoginPage> {
     return SafeArea(
       child: Stack(
         children: [
-          // Back button
-          Positioned(
-            top: 8,
-            left: 8,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Get.back(),
-            ),
-          ),
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 48, 20, 20),
@@ -93,7 +84,11 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 64),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: Colors.white,
+                        size: 64,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     const Text(
@@ -114,7 +109,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 40),
-                    _brandFeature(Icons.local_shipping, 'Giao nhanh trong 30 phút'),
+                    _brandFeature(
+                      Icons.local_shipping,
+                      'Giao nhanh trong 30 phút',
+                    ),
                     const SizedBox(height: 14),
                     _brandFeature(Icons.eco_outlined, 'Sản phẩm tươi sạch'),
                     const SizedBox(height: 14),
@@ -149,7 +147,10 @@ class _LoginPageState extends State<LoginPage> {
         const SizedBox(width: 12),
         Text(
           text,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 15),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontSize: 15,
+          ),
         ),
       ],
     );
@@ -169,7 +170,11 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 12),
             Text(
               'Đăng nhập',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -185,50 +190,77 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 14),
 
-            Obx(() => TextField(
-                  controller: passwordController,
-                  obscureText: isPasswordHidden.value,
-                  decoration: _inputDecoration(
-                    'Mật khẩu',
-                    Icons.lock_outline,
-                    suffixIcon: IconButton(
-                      icon: Icon(isPasswordHidden.value ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => isPasswordHidden.toggle(),
+            Obx(
+              () => TextField(
+                controller: passwordController,
+                obscureText: isPasswordHidden.value,
+                decoration: _inputDecoration(
+                  'Mật khẩu',
+                  Icons.lock_outline,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      isPasswordHidden.value
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
+                    onPressed: () => isPasswordHidden.toggle(),
                   ),
-                )),
+                ),
+              ),
+            ),
             const SizedBox(height: 22),
 
-            Obx(() => SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: isLoading.value ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: isLoading.value ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: isLoading.value
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                          )
-                        : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   ),
-                )),
+                  child: isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Đăng nhập',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ),
             const SizedBox(height: 14),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Chưa có tài khoản? ', style: TextStyle(color: Colors.grey.shade600)),
+                Text(
+                  'Chưa có tài khoản? ',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
                 TextButton(
                   onPressed: () => Get.to(() => const RegisterPage()),
                   child: Text(
                     'Đăng ký ngay',
-                    style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -239,7 +271,11 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon, {
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
@@ -275,7 +311,7 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
       if (response.user != null) {
-        await _handleLoginSuccess(response.user!.id, email);
+        await _handleLoginSuccess(response.user!.id);
       }
     } catch (e) {
       print('Login error: $e');
@@ -291,29 +327,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleLoginSuccess(String userId, String email) async {
+  Future<void> _handleLoginSuccess(String userId) async {
     try {
-      final existingUser = await Supabase.instance.client
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
-
-      if (existingUser == null) {
-        await Supabase.instance.client.from('users').insert({
-          'id': userId,
-          'email': email,
-          'full_name': '',
-          'phone': '',
-          'role': 'customer',
-          'status': 'active',
-          'loyalty_points': 0,
-          'is_available': false,
-          'shipper_rating': 5.0,
-          'total_deliveries': 0,
-        });
-      }
-
       final userData = await Supabase.instance.client
           .from('users')
           .select()

@@ -235,7 +235,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         children: [
           const Text('Thông tin đơn hàng', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          _buildInfoRow('Mã đơn:', '#${order.id.substring(0, 8).toUpperCase()}'),
+          _buildInfoRow('Mã đơn:', '#${order.displayCode}'),
           _buildInfoRow('Ngày đặt:', _formatDateTime(order.createdAt)),
           _buildInfoRow('Thanh toán:', order.paymentMethod.displayName),
           _buildInfoRow(
@@ -258,35 +258,9 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
           const Text('Thông tin giao hàng', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           _buildInfoRow('Địa chỉ:', order.address?.fullAddress ?? 'Chưa cập nhật'),
-          _buildInfoRow('Hình thức:', order.shippingMethod.displayName),
-          if (order.shipper != null) ...[
-            const Divider(height: 20),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.green.shade50,
-                  child: Icon(Icons.delivery_dining, color: Colors.green.shade700),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order.shipper!.fullName ?? 'Shipper',
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      Text(
-                        order.shipper!.phone ?? '---',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+          _buildInfoRow('Hình thức:', order.deliveryType.displayName),
+          if (order.isCancelled && order.cancelReason != null)
+            _buildInfoRow('Lý do hủy:', order.cancelReason!, valueColor: Colors.red.shade700),
         ],
       ),
     );
@@ -388,15 +362,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Widget _buildOrderSummary(OrderModel order) {
-    final shippingFee = order.shippingFee;
-    final subtotal = order.totalAmount - shippingFee;
-
     return _buildCard(
       child: Column(
         children: [
-          _buildSummaryRow('Tạm tính', '${subtotal.toStringAsFixed(0)}đ'),
+          _buildSummaryRow('Tạm tính', '${order.subtotal.toStringAsFixed(0)}đ'),
           const SizedBox(height: 6),
-          _buildSummaryRow('Phí giao hàng', '${shippingFee.toStringAsFixed(0)}đ'),
+          _buildSummaryRow('Phí giao hàng', '${order.shippingFee.toStringAsFixed(0)}đ'),
+          if (order.discountAmount > 0) ...[
+            const SizedBox(height: 6),
+            _buildSummaryRow('Giảm giá', '-${order.discountAmount.toStringAsFixed(0)}đ'),
+          ],
           const Divider(height: 20),
           _buildSummaryRow('Tổng cộng', order.formattedTotal, isTotal: true),
         ],

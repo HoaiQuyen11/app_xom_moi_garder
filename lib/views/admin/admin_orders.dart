@@ -46,11 +46,7 @@ class _AdminOrdersState extends State<AdminOrders> {
                     filled: true,
                     fillColor: Colors.grey.shade100,
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
+                  onChanged: (value) => setState(() => searchQuery = value),
                 ),
               ),
               const SizedBox(width: 16),
@@ -67,15 +63,11 @@ class _AdminOrdersState extends State<AdminOrders> {
                     items: [
                       const DropdownMenuItem(value: null, child: Text('Tất cả')),
                       ...OrderStatus.values.map((status) => DropdownMenuItem(
-                        value: status.value,
-                        child: Text(status.displayName),
-                      )),
+                            value: status.value,
+                            child: Text(status.displayName),
+                          )),
                     ],
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStatus = value;
-                      });
-                    },
+                    onChanged: (value) => setState(() => selectedStatus = value),
                   ),
                 ),
               ),
@@ -93,16 +85,17 @@ class _AdminOrdersState extends State<AdminOrders> {
             var filteredOrders = adminController.orders.toList();
             if (searchQuery.isNotEmpty) {
               final query = searchQuery.toLowerCase();
-              filteredOrders = filteredOrders.where((o) =>
-              o.id.contains(searchQuery) ||
-                  (o.customer?.fullName?.toLowerCase().contains(query) ?? false) ||
-                  (o.customer?.phone?.contains(searchQuery) ?? false)
-              ).toList();
+              filteredOrders = filteredOrders
+                  .where((o) =>
+                      o.id.contains(searchQuery) ||
+                      (o.orderCode?.toLowerCase().contains(query) ?? false) ||
+                      (o.customer?.fullName?.toLowerCase().contains(query) ?? false) ||
+                      (o.customer?.phone?.contains(searchQuery) ?? false))
+                  .toList();
             }
             if (selectedStatus != null) {
-              filteredOrders = filteredOrders.where((o) =>
-              o.status.value == selectedStatus
-              ).toList();
+              filteredOrders =
+                  filteredOrders.where((o) => o.status.value == selectedStatus).toList();
             }
 
             if (filteredOrders.isEmpty) {
@@ -123,7 +116,7 @@ class _AdminOrdersState extends State<AdminOrders> {
                 ],
                 rows: filteredOrders.map((order) {
                   return DataRow(cells: [
-                    DataCell(Text(order.id.substring(0, 8))),
+                    DataCell(Text(order.displayCode)),
                     DataCell(Text(order.customer?.fullName ?? 'Khách hàng')),
                     DataCell(Text('${order.totalAmount.toStringAsFixed(0)}đ')),
                     DataCell(_buildStatusChip(order.status)),
@@ -146,8 +139,14 @@ class _AdminOrdersState extends State<AdminOrders> {
                         if (order.status == OrderStatus.preparing)
                           IconButton(
                             icon: const Icon(Icons.delivery_dining, color: Colors.blue),
-                            onPressed: () => _assignShipper(order),
-                            tooltip: 'Giao cho shipper',
+                            onPressed: () => _updateStatus(order, 'delivering'),
+                            tooltip: 'Giao hàng',
+                          ),
+                        if (order.status == OrderStatus.delivering)
+                          IconButton(
+                            icon: const Icon(Icons.verified, color: Colors.green),
+                            onPressed: () => _updateStatus(order, 'completed'),
+                            tooltip: 'Hoàn thành',
                           ),
                         if (order.status != OrderStatus.completed &&
                             order.status != OrderStatus.cancelled)
@@ -196,63 +195,24 @@ class _AdminOrdersState extends State<AdminOrders> {
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        status.displayName,
-        style: TextStyle(color: color),
-      ),
+      child: Text(status.displayName, style: TextStyle(color: color)),
     );
   }
 
   Widget _buildPaymentChip(PaymentStatus status) {
-    Color color = status == PaymentStatus.paid ? Colors.green : Colors.orange;
+    final color = status == PaymentStatus.paid ? Colors.green : Colors.orange;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        status.displayName,
-        style: TextStyle(color: color),
-      ),
+      child: Text(status.displayName, style: TextStyle(color: color)),
     );
   }
 
   void _updateStatus(OrderModel order, String status) async {
     await adminController.updateOrderStatus(order.id, status);
-  }
-
-  void _assignShipper(OrderModel order) async {
-    final shippers = await adminController.getShippers();
-    if (shippers.isEmpty) {
-      Get.snackbar('Lỗi', 'Không có shipper nào đang hoạt động');
-      return;
-    }
-
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Chọn shipper'),
-        content: SizedBox(
-          width: 300,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: shippers.length,
-            itemBuilder: (context, index) {
-              final shipper = shippers[index];
-              return ListTile(
-                leading: const Icon(Icons.delivery_dining),
-                title: Text(shipper.fullName ?? 'Shipper'),
-                subtitle: Text(shipper.phone ?? ''),
-                onTap: () {
-                  Get.back();
-                  adminController.assignShipper(order.id, shipper.id);
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
   }
 
   String _formatDate(DateTime date) {

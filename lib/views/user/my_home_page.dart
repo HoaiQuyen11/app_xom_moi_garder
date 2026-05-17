@@ -16,7 +16,6 @@ import 'cart_page.dart';
 import 'order_history_page.dart';
 import 'profile_page.dart';
 
-
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -31,7 +30,6 @@ class _MyHomePageState extends State<MyHomePage> {
   late ControllerAuth authController;
   late ControllerCart cartController;
   late ControllerProduct productController;
-
 
   final ScrollController _scrollController = ScrollController();
 
@@ -77,10 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1.2,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x33000000),
@@ -125,17 +120,34 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         const Icon(Icons.star, color: Colors.amber, size: 16),
                         const SizedBox(width: 4),
-                        const Text("4.8", style: TextStyle(fontSize: 14, color: Colors.black)),
+                        const Text(
+                          "4.8",
+                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.favorite, color: Colors.pink, size: 16),
+                        const Icon(
+                          Icons.favorite,
+                          color: Colors.pink,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
-                        const Text("1.2k", style: TextStyle(fontSize: 14, color: Colors.black)),
+                        const Text(
+                          "1.2k",
+                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.shopping_bag, color: Colors.brown, size: 16),
+                        const Icon(
+                          Icons.shopping_bag,
+                          color: Colors.brown,
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           "${cartController.totalQuantity}",
-                          style: const TextStyle(fontSize: 14, color: Colors.black),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
                         ),
                       ],
                     ),
@@ -153,22 +165,10 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           const Divider(height: 20),
           // Row 2: Chi tiết dịch vụ
-          _buildDetailRow(
-            'Thời gian giao hàng',
-            '06:30 ~ 21:20 (hàng ngày)',
-          ),
-          _buildDetailRow(
-            'Đơn hàng tối thiểu',
-            '0đ',
-          ),
-          _buildDetailRow(
-            'Phương thức thanh toán',
-            'Tiền mặt, Chuyển khoản',
-          ),
-          _buildDetailRow(
-            'Phí giao hàng',
-            'Miễn phí cho đơn 300k trong 10km',
-          ),
+          _buildDetailRow('Thời gian giao hàng', '06:30 ~ 21:20 (hàng ngày)'),
+          _buildDetailRow('Đơn hàng tối thiểu', '0đ'),
+          _buildDetailRow('Phương thức thanh toán', 'Tiền mặt, Chuyển khoản'),
+          _buildDetailRow('Phí giao hàng', 'Miễn phí cho đơn 300k trong 10km'),
           const SizedBox(height: 10),
         ],
       ),
@@ -221,10 +221,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
-        Container(
-          height: 180,
-          color: Colors.black.withOpacity(0.15),
-        ),
+        Container(height: 180, color: Colors.black.withOpacity(0.15)),
         Positioned(
           top: 40,
           left: 12,
@@ -244,20 +241,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Row(
                 children: [
-                  _buildCircleIcon(
-                    icon: Icons.call,
-                    onTap: () {},
-                  ),
+                  _buildCircleIcon(icon: Icons.call, onTap: () {}),
                   const SizedBox(width: 8),
-                  _buildCircleIcon(
-                    icon: Icons.chat_outlined,
-                    onTap: () {},
-                  ),
+                  _buildCircleIcon(icon: Icons.chat_outlined, onTap: () {}),
                   const SizedBox(width: 8),
-                  _buildCircleIcon(
-                    icon: Icons.favorite_border,
-                    onTap: () {},
-                  ),
+                  _buildCircleIcon(icon: Icons.favorite_border, onTap: () {}),
                   const SizedBox(width: 8),
                   _buildCircleIcon(
                     icon: Icons.search,
@@ -297,12 +285,7 @@ class _MyHomePageState extends State<MyHomePage> {
       clipBehavior: Clip.none,
       children: [
         _buildCover(),
-        Positioned(
-          left: 12,
-          right: 12,
-          bottom: -150,
-          child: _buildStoreInfo(),
-        ),
+        Positioned(left: 12, right: 12, bottom: -150, child: _buildStoreInfo()),
       ],
     );
   }
@@ -317,10 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-            )
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8),
           ],
         ),
         child: Row(
@@ -411,73 +391,80 @@ class _MyHomePageState extends State<MyHomePage> {
     return Drawer(
       child: Container(
         color: Colors.green.shade200,
-          child: Obx(() {
-            final isLoggedIn = authController.currentUser.value != null;
+        child: Obx(() {
+          final isLoggedIn = authController.currentUser.value != null;
           return ListView(
-          children: [
-            Obx(() => UserAccountsDrawerHeader(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.shade800, Colors.greenAccent],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            children: [
+              Obx(
+                () => UserAccountsDrawerHeader(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.green.shade800, Colors.greenAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  accountName: Text(
+                    authController.isLoggedIn
+                        ? "Xin chào ${authController.currentUser.value?.fullName ?? 'bạn'} 👋"
+                        : "Xin chào 👋",
+                  ),
+                  accountEmail: Text(
+                    authController.isLoggedIn
+                        ? authController.currentUser.value?.email ??
+                              "Chưa có email"
+                        : "Vui lòng đăng nhập",
+                  ),
+                  currentAccountPicture: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.green,
+                      size: 40,
+                    ),
+                  ),
                 ),
               ),
-              accountName: Text(
-                authController.isLoggedIn
-                    ? "Xin chào ${authController.currentUser.value?.fullName ?? 'bạn'} 👋"
-                    : "Xin chào 👋",
-              ),
-              accountEmail: Text(
-                authController.isLoggedIn
-                    ? authController.currentUser.value?.email ?? "Chưa có email"
-                    : "Vui lòng đăng nhập",
-              ),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: const Icon(Icons.person, color: Colors.green, size: 40),
-              ),
-            )),
-            if (authController.isLoggedIn)
-              ListTile(
-                leading: const Icon(Icons.account_circle),
-                title: const Text("Hồ sơ"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => ProfilePage());
-                },
-              ),
-            if (authController.isLoggedIn)
-              ListTile(
-                leading: const Icon(Icons.receipt_long_outlined),
-                title: const Text("Lịch sử đơn hàng"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => OrderHistoryPage());
-                },
-              ),
-            if (authController.isLoggedIn)
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text("Đăng xuất"),
-                onTap: () async {
-                  await authController.logout();
-                  Navigator.pop(context);
-                },
-              ),
-            if (!authController.isLoggedIn)
-              ListTile(
-                leading: const Icon(Icons.login),
-                title: const Text("Đăng nhập"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Get.to(() => const LoginPage());
-                },
-              ),
-            const Divider(),
-          ],
-        );
-          }),
+              if (authController.isLoggedIn)
+                ListTile(
+                  leading: const Icon(Icons.account_circle),
+                  title: const Text("Hồ sơ"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Get.to(() => ProfilePage());
+                  },
+                ),
+              if (authController.isLoggedIn)
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: const Text("Lịch sử đơn hàng"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Get.to(() => OrderHistoryPage());
+                  },
+                ),
+              if (authController.isLoggedIn)
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text("Đăng xuất"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await authController.logout();
+                  },
+                ),
+              if (!authController.isLoggedIn)
+                ListTile(
+                  leading: const Icon(Icons.login),
+                  title: const Text("Đăng nhập"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Get.to(() => const LoginPage());
+                  },
+                ),
+              const Divider(),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -539,11 +526,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   GlobalKey _getCategoryKey(String categoryName) {
-    if (categoryName.contains('Bánh căn') || categoryName.contains('Món ăn')) {
+    if (categoryName.contains('Bánh Căn') || categoryName.contains('Món ăn')) {
       return _foodKey;
-    } else if (categoryName.contains('Bánh xèo')) {
+    } else if (categoryName.contains('Bánh Xèo')) {
       return _drinkKey;
-    } else if (categoryName.contains('Nước giải khát')) {
+    } else if (categoryName.contains('Nước Giải Khát')) {
       return _householdKey;
     }
     return GlobalKey();
@@ -554,39 +541,60 @@ class _MyHomePageState extends State<MyHomePage> {
       final allProducts = productController.products;
 
       // Phân loại sản phẩm theo category
-      final foodProducts = allProducts.where((p) =>
-      p.categoryId != null &&
-          productController.categories.firstWhereOrNull((c) => c.id == p.categoryId)?.name.contains('Bánh căn') == true
-      ).toList();
+      final foodProducts = allProducts
+          .where(
+            (p) =>
+                p.categoryId != null &&
+                productController.categories
+                        .firstWhereOrNull((c) => c.id == p.categoryId)
+                        ?.name
+                        .contains('Bánh Căn') ==
+                    true,
+          )
+          .toList();
 
-      final drinkProducts = allProducts.where((p) =>
-      p.categoryId != null &&
-          productController.categories.firstWhereOrNull((c) => c.id == p.categoryId)?.name.contains('Bánh xèo') == true
-      ).toList();
+      final drinkProducts = allProducts
+          .where(
+            (p) =>
+                p.categoryId != null &&
+                productController.categories
+                        .firstWhereOrNull((c) => c.id == p.categoryId)
+                        ?.name
+                        .contains('Bánh Xèo') ==
+                    true,
+          )
+          .toList();
 
-      final householdProducts = allProducts.where((p) =>
-      p.categoryId != null &&
-          productController.categories.firstWhereOrNull((c) => c.id == p.categoryId)?.name.contains('Nước giải khát') == true
-      ).toList();
+      final householdProducts = allProducts
+          .where(
+            (p) =>
+                p.categoryId != null &&
+                productController.categories
+                        .firstWhereOrNull((c) => c.id == p.categoryId)
+                        ?.name
+                        .contains('Nước Giải Khát') ==
+                    true,
+          )
+          .toList();
 
       return Column(
         children: [
           if (foodProducts.isNotEmpty)
-            _buildSection('Bánh căn', _foodKey, foodProducts),
+            _buildSection('Bánh Căn', _foodKey, foodProducts),
           if (drinkProducts.isNotEmpty)
-            _buildSection('Bánh xèo', _drinkKey, drinkProducts),
+            _buildSection('Bánh Xèo', _drinkKey, drinkProducts),
           if (householdProducts.isNotEmpty)
-            _buildSection('Nước giải khát', _householdKey, householdProducts),
+            _buildSection('Nước Giải Khát', _householdKey, householdProducts),
         ],
       );
     });
   }
 
   Widget _buildSection(
-      String title,
-      GlobalKey key,
-      List<ProductModel> products,
-      ) {
+    String title,
+    GlobalKey key,
+    List<ProductModel> products,
+  ) {
     if (products.isEmpty) return const SizedBox();
 
     return Column(
@@ -597,7 +605,8 @@ class _MyHomePageState extends State<MyHomePage> {
           child: buildSectionHeader(
             key: key,
             title: title,
-            subtitle: 'Hình ảnh sản phẩm hiển thị có thể khác với thực tế.\n'
+            subtitle:
+                'Hình ảnh sản phẩm hiển thị có thể khác với thực tế.\n'
                 'Thời gian mở bán từ 10:00 ~ 21:30',
           ),
         ),
@@ -632,10 +641,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
           ],
         ],
@@ -665,10 +671,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           child: Text(
             label,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 18,
-            ),
+            style: const TextStyle(color: Colors.black, fontSize: 18),
           ),
         ),
       ),
@@ -678,8 +681,9 @@ class _MyHomePageState extends State<MyHomePage> {
   // Widget Item Sản phẩm cho ListView ngang (Nhất định phải thử)
   Widget _buildProductHorizontalItem(ProductModel product) {
     final gia = product.price;
-    final itemInCart = cartController.cartItems
-        .firstWhereOrNull((e) => e.productId == product.id);
+    final itemInCart = cartController.cartItems.firstWhereOrNull(
+      (e) => e.productId == product.id,
+    );
 
     return Container(
       width: 180,
@@ -699,25 +703,27 @@ class _MyHomePageState extends State<MyHomePage> {
             // Ảnh sản phẩm
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
                 child: Stack(
                   children: [
                     Positioned.fill(
                       child: product.imageUrl != null
                           ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: const Icon(Icons.fastfood, size: 40),
-                          );
-                        },
-                      )
+                              product.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.fastfood, size: 40),
+                                );
+                              },
+                            )
                           : Container(
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.fastfood, size: 40),
-                      ),
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.fastfood, size: 40),
+                            ),
                     ),
                     Positioned(
                       bottom: 8,
@@ -725,8 +731,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: ProductQuantityControl(
                         product: product,
                         isHorizontal: true,
-                        addBtnKey: GlobalKey(), // Tạo key riêng cho từng sản phẩm
-                      )
+                        addBtnKey:
+                            GlobalKey(), // Tạo key riêng cho từng sản phẩm
+                      ),
                     ),
                   ],
                 ),
@@ -785,25 +792,25 @@ class _MyHomePageState extends State<MyHomePage> {
               borderRadius: BorderRadius.circular(6),
               child: product.imageUrl != null
                   ? Image.network(
-                product.imageUrl!,
-                width: 120,
-                height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 120,
-                    height: 120,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.fastfood, size: 40),
-                  );
-                },
-              )
+                      product.imageUrl!,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.fastfood, size: 40),
+                        );
+                      },
+                    )
                   : Container(
-                width: 120,
-                height: 120,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.fastfood, size: 40),
-              ),
+                      width: 120,
+                      height: 120,
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.fastfood, size: 40),
+                    ),
             ),
             const SizedBox(width: 15),
             // THÔNG TIN
@@ -838,7 +845,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       ProductQuantityControl(
                         product: product,
                         isHorizontal: true,
-                        addBtnKey: GlobalKey(), // Tạo key riêng cho từng sản phẩm
+                        addBtnKey:
+                            GlobalKey(), // Tạo key riêng cho từng sản phẩm
                       ),
                     ],
                   ),
@@ -846,14 +854,15 @@ class _MyHomePageState extends State<MyHomePage> {
                   // FAVORITE
                   Row(
                     children: const [
-                      Icon(Icons.favorite_border, size: 16, color: Colors.orange),
+                      Icon(
+                        Icons.favorite_border,
+                        size: 16,
+                        color: Colors.orange,
+                      ),
                       SizedBox(width: 4),
                       Text(
                         "0",
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.orange, fontSize: 14),
                       ),
                     ],
                   ),
@@ -915,11 +924,7 @@ class _MyHomePageState extends State<MyHomePage> {
           duration: const Duration(milliseconds: 700),
           curve: Curves.easeInOutCubic,
           builder: (_, value, child) {
-            return Positioned(
-              left: value.dx,
-              top: value.dy,
-              child: child!,
-            );
+            return Positioned(left: value.dx, top: value.dy, child: child!);
           },
           onEnd: () => entry.remove(),
           child: Material(
@@ -927,17 +932,17 @@ class _MyHomePageState extends State<MyHomePage> {
             child: ClipOval(
               child: product.imageUrl != null
                   ? Image.network(
-                product.imageUrl!,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-              )
+                      product.imageUrl!,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                    )
                   : Container(
-                width: 40,
-                height: 40,
-                color: Colors.green,
-                child: const Icon(Icons.fastfood, color: Colors.white),
-              ),
+                      width: 40,
+                      height: 40,
+                      color: Colors.green,
+                      child: const Icon(Icons.fastfood, color: Colors.white),
+                    ),
             ),
           ),
         );
@@ -1015,7 +1020,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -1053,8 +1061,11 @@ class _MyHomePageState extends State<MyHomePage> {
             // DÒNG DƯỚI
             const Row(
               children: [
-                Icon(Icons.local_shipping_outlined,
-                    color: Colors.white70, size: 18),
+                Icon(
+                  Icons.local_shipping_outlined,
+                  color: Colors.white70,
+                  size: 18,
+                ),
                 SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -1090,13 +1101,9 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Đóng'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Đóng')),
         ],
       ),
     );
   }
 }
-

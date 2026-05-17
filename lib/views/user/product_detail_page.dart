@@ -1,11 +1,10 @@
 // lib/views/user/product_detail_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:supabase_auth_ui/supabase_auth_ui.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:xommoigarden/controller/cart_controller.dart';
-import 'package:xommoigarden/model/option_group_model.dart';
-import 'package:xommoigarden/model/option_item_model.dart';
 import 'package:xommoigarden/model/product_model.dart';
+import 'package:xommoigarden/model/product_option_model.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final ProductModel product;
@@ -26,68 +25,32 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   int quantity = 1;
 
-  // ====== OPTION DATA ======
-  List<OptionGroup> listGroup = [];
-  Map<String, List<OptionItem>> listItemTheoGroup = {};
-  Map<String, OptionItem?> selectedSingle = {}; // single
-  Map<String, Set<OptionItem>> selectedMulti = {}; // multi
+  List<ProductOption> productOptions = [];
+  // optionId → selected OptionValue
+  Map<String, OptionValue?> selectedValues = {};
 
   @override
   void initState() {
     super.initState();
-    loadOptions();
+    _loadOptions();
   }
 
-  String getOptionText() {
-    List<String> result = [];
-
-    // single
-    selectedSingle.forEach((gid, op) {
-      if (op != null) result.add(op.name);
-    });
-
-    // multi
-    selectedMulti.forEach((gid, ops) {
-      for (var op in ops) {
-        result.add(op.name);
-      }
-    });
-
-    return result.join(", ");
-  }
-
-  Future<void> loadOptions() async {
+  Future<void> _loadOptions() async {
     final supabase = Supabase.instance.client;
-
     try {
-      // lấy group
-      final resGroup = await supabase
-          .from("option_groups")
+      final res = await supabase
+          .from('product_options')
           .select()
-          .eq("product_id", widget.product.id);
+          .eq('product_id', widget.product.id)
+          .order('created_at');
 
-      listGroup = resGroup.map<OptionGroup>((m) => OptionGroup.fromJson(m)).toList();
+      productOptions = res
+          .map<ProductOption>((m) => ProductOption.fromJson(m))
+          .toList();
 
-      // lấy item theo group
-      for (var g in listGroup) {
-        final resItem = await supabase
-            .from("option_items")
-            .select()
-            .eq("group_id", g.id);
-
-        final items = resItem.map<OptionItem>((m) => OptionItem.fromJson(m)).toList();
-
-        listItemTheoGroup[g.id] = items;
-
-        if (g.selectionType == "single") {
-          // chọn mặc định
-          final macDinh = items.firstWhere(
-                (e) => e.isDefault == true,
-            orElse: () => items.first,
-          );
-          selectedSingle[g.id] = macDinh;
-        } else {
-          selectedMulti[g.id] = {};
+      for (var opt in productOptions) {
+        if (opt.values.isNotEmpty) {
+          selectedValues[opt.id] = opt.values.first;
         }
       }
 
@@ -97,27 +60,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
-  double tinhGiaSauCung() {
-    final double giaGoc = widget.product.price;
-    double giaOption = 0;
-
-    // single
-    for (var op in selectedSingle.values) {
-      if (op != null) giaOption += op.priceAdjustment;
+  double _calcTotal() {
+    double extra = 0;
+    for (var val in selectedValues.values) {
+      if (val != null) extra += val.price;
     }
-
-    // multi
-    for (var setOp in selectedMulti.values) {
-      for (var op in setOp) {
-        giaOption += op.priceAdjustment;
-      }
-    }
-
-    return giaGoc + giaOption;
-  }
-
-  double tinhTongTien() {
-    return tinhGiaSauCung() * quantity;
+    return (widget.product.price + extra) * quantity;
   }
 
   @override
@@ -128,7 +76,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       body: CustomScrollView(
         controller: widget.scrollController,
         slivers: [
-          // Thanh kéo (drag handle)
           SliverAppBar(
             backgroundColor: Colors.white,
             elevation: 0,
@@ -152,98 +99,59 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
 
-          // ================= NỘI DUNG =================
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 120),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Ảnh sản phẩm (1 ảnh duy nhất)
+                  // Ảnh sản phẩm
                   SizedBox(
                     height: 300,
                     width: double.infinity,
                     child: product.imageUrl != null
                         ? Image.network(
-                      product.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: const Icon(
-                            Icons.fastfood,
-                            size: 80,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    )
+                            product.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.fastfood, size: 80, color: Colors.grey),
+                            ),
+                          )
                         : Container(
-                      color: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.fastfood,
-                        size: 80,
-                        color: Colors.grey,
-                      ),
-                    ),
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.fastfood, size: 80, color: Colors.grey),
+                          ),
                   ),
 
-                  // ================= TÊN SẢN PHẨM =================
+                  // Tên sản phẩm
                   Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Text(
                       product.name,
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                     ),
                   ),
 
-                  // ================= ICON ⭐ ❤️ 🛍 =================
+                  // Rating + reviews
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: Row(
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 18),
-                            const SizedBox(width: 4),
-                            Text(
-                              product.ratingDisplay,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
+                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(product.ratingDisplay, style: const TextStyle(fontSize: 14)),
                         const SizedBox(width: 20),
-                        Row(
-                          children: [
-                            const Icon(Icons.favorite, color: Colors.pink, size: 18),
-                            const SizedBox(width: 4),
-                            Text(
-                              "${product.totalReviews}",
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 20),
-                        Row(
-                          children: [
-                            const Icon(Icons.shopping_bag, color: Colors.green, size: 18),
-                            const SizedBox(width: 4),
-                            const Text(
-                              "0",
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
+                        const Icon(Icons.favorite, color: Colors.pink, size: 18),
+                        const SizedBox(width: 4),
+                        Text('${product.totalReviews}', style: const TextStyle(fontSize: 14)),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 16),
 
-                  // ================= MÔ TẢ =================
+                  // Mô tả
                   if (product.description != null && product.description!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -252,19 +160,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         children: [
                           const Text(
                             'Mô tả sản phẩm',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             product.description!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade700,
-                              height: 1.5,
-                            ),
+                            style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
                           ),
                         ],
                       ),
@@ -272,115 +173,50 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                   const SizedBox(height: 16),
 
-                  // ================= OPTIONS =================
-                  if (listGroup.isNotEmpty)
+                  // Options (product_options JSONB)
+                  if (productOptions.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...listGroup.map((group) {
-                            final items = listItemTheoGroup[group.id] ?? [];
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 16),
-                                Text(
-                                  "${group.name} (${group.selectionType == "single" ? "Một lựa chọn" : "Nhiều lựa chọn"})",
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
+                        children: productOptions.map((opt) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 16),
+                              Text(
+                                '${opt.name}${opt.isRequired ? ' *' : ''}',
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 12),
+                              ...opt.values.map((val) {
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.green.shade200),
                                   ),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // SINGLE OPTION
-                                if (group.selectionType == "single")
-                                  ...items.map((op) {
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.green.shade200),
+                                  child: RadioListTile<String>(
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                    value: val.label,
+                                    groupValue: selectedValues[opt.id]?.label,
+                                    title: Text(val.label, style: const TextStyle(fontSize: 16)),
+                                    secondary: Text(
+                                      val.formattedPrice,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.green.shade700,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      child: RadioListTile<String>(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                        value: op.id,
-                                        groupValue: selectedSingle[group.id]?.id,
-                                        title: Text(
-                                          op.name,
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                        secondary: Text(
-                                          op.priceAdjustment > 0
-                                              ? "+${op.priceAdjustment.toStringAsFixed(0)}đ"
-                                              : op.priceAdjustment == 0
-                                              ? "Miễn phí"
-                                              : "${op.priceAdjustment.toStringAsFixed(0)}đ",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.green.shade700,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        onChanged: (_) {
-                                          setState(() {
-                                            selectedSingle[group.id!] = op;
-                                          });
-                                        },
-                                        activeColor: Colors.green,
-                                      ),
-                                    );
-                                  }),
-
-                                // MULTI OPTION
-                                if (group.selectionType == "multi")
-                                  ...items.map((op) {
-                                    bool checked = selectedMulti[group.id]!.contains(op);
-
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 8),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(color: Colors.grey.shade300),
-                                      ),
-                                      child: CheckboxListTile(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                        value: checked,
-                                        title: Text(
-                                          op.name,
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                        secondary: Text(
-                                          op.priceAdjustment > 0
-                                              ? "+${op.priceAdjustment.toStringAsFixed(0)}đ"
-                                              : op.priceAdjustment == 0
-                                              ? "Miễn phí"
-                                              : "${op.priceAdjustment.toStringAsFixed(0)}đ",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.green.shade700,
-                                          ),
-                                        ),
-                                        onChanged: (val) {
-                                          setState(() {
-                                            if (val == true) {
-                                              selectedMulti[group.id]!.add(op);
-                                            } else {
-                                              selectedMulti[group.id]!.remove(op);
-                                            }
-                                          });
-                                        },
-                                        activeColor: Colors.green,
-                                        checkColor: Colors.white,
-                                      ),
-                                    );
-                                  }),
-                              ],
-                            );
-                          }).toList(),
-                        ],
+                                    ),
+                                    onChanged: (_) => setState(() => selectedValues[opt.id] = val),
+                                    activeColor: Colors.green,
+                                  ),
+                                );
+                              }),
+                            ],
+                          );
+                        }).toList(),
                       ),
                     ),
 
@@ -392,24 +228,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         ],
       ),
 
-      // ================= BOTTOM BAR =================
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
+            BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, -2)),
           ],
         ),
         child: SafeArea(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Điều chỉnh số lượng
+              // Số lượng
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade300),
@@ -420,45 +251,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     IconButton(
                       icon: const Icon(Icons.remove, size: 20),
                       onPressed: () {
-                        setState(() {
-                          if (quantity > 1) quantity--;
-                        });
+                        if (quantity > 1) setState(() => quantity--);
                       },
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                     ),
-                    Container(
+                    SizedBox(
                       width: 40,
                       child: Text(
-                        "$quantity",
+                        '$quantity',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add, size: 20),
-                      onPressed: () {
-                        setState(() {
-                          quantity++;
-                        });
-                      },
+                      onPressed: () => setState(() => quantity++),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                     ),
                   ],
                 ),
               ),
 
-              // Nút Thêm vào giỏ
+              // Nút thêm giỏ
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(left: 16),
@@ -467,29 +283,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       elevation: 0,
                     ),
                     onPressed: () async {
-                      // Gom tất cả option đã chọn
-                      final List<OptionItem> selectedOptions = [];
-                      for (var op in selectedSingle.values) {
-                        if (op != null) selectedOptions.add(op);
-                      }
-                      for (var setOp in selectedMulti.values) {
-                        selectedOptions.addAll(setOp);
+                      // Gom options đã chọn thành JSONB format
+                      final List<Map<String, dynamic>> selectedOptions = [];
+                      for (var opt in productOptions) {
+                        final val = selectedValues[opt.id];
+                        if (val != null) {
+                          selectedOptions.add({
+                            'name': opt.name,
+                            'value': val.label,
+                            'price': val.price,
+                          });
+                        }
                       }
 
-                      // Thêm vào giỏ hàng
                       await cartController.addToCart(
                         widget.product,
                         quantity,
                         selectedOptions: selectedOptions,
                       );
 
-                      // Quay lại trang trước
                       if (widget.scrollController != null) {
                         Navigator.pop(context);
                       } else {
@@ -502,11 +318,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         const Icon(Icons.add_shopping_cart, size: 20),
                         const SizedBox(width: 8),
                         Text(
-                          "Thêm vào giỏ • ${tinhTongTien().toStringAsFixed(0)}đ",
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Thêm vào giỏ • ${_calcTotal().toStringAsFixed(0)}đ',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

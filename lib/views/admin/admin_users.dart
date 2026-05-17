@@ -187,8 +187,6 @@ class _AdminUsersState extends State<AdminUsers> {
         return Colors.red;
       case UserRole.customer:
         return Colors.blue;
-      case UserRole.shipper:
-        return Colors.green;
     }
   }
 

@@ -4,12 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final supabase = Supabase.instance.client;
 Future<String> uploadImage({required File image, required String bucket, required String path, bool upsert = false}) async{
   //gd1: tai len
-  await supabase.storage.from("images").upload(
+  await supabase.storage.from(bucket).upload(
     path,
     image,
-    fileOptions: const FileOptions(
+    fileOptions: FileOptions(
         cacheControl: '3600',
-        upsert: false
+        upsert: upsert
     ),
   );
   //gd2: lay duong dan

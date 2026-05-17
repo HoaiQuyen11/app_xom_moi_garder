@@ -44,6 +44,7 @@ dependencies:
   latlong2: ^0.9.1
   debounce_throttle: ^2.0.0
   geolocator: ^14.0.2
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:

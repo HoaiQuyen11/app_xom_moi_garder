@@ -28,15 +28,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final ControllerAuth authController = Get.find<ControllerAuth>();
   final ControllerAddress addressController = Get.put(ControllerAddress());
 
-  // Selected values
   AddressModel? selectedAddress;
-  ShippingMethod selectedShippingMethod = ShippingMethod.standard;
+  DeliveryType selectedDeliveryType = DeliveryType.delivery;
   PaymentMethod selectedPaymentMethod = PaymentMethod.cod;
   String note = '';
 
   final TextEditingController noteController = TextEditingController();
 
-  // Map/route state
   RouteResult? routeResult;
   bool isLoadingRoute = false;
 
@@ -50,10 +48,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     await addressController.fetchAddresses();
     if (!mounted) return;
 
-    // Tự chọn địa chỉ mặc định
     if (selectedAddress == null && addressController.addresses.isNotEmpty) {
-      final defaultAddr = addressController.addresses
-              .firstWhereOrNull((a) => a.isDefault) ??
+      final defaultAddr =
+          addressController.addresses.firstWhereOrNull((a) => a.isDefault) ??
           addressController.addresses.first;
       setState(() => selectedAddress = defaultAddr);
       _fetchRoute(defaultAddr);
@@ -74,26 +71,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   double get shippingFee {
     if (routeResult != null) {
-      return MapService.calculateShippingFee(
-        routeResult!.distanceKm,
-        isFast: selectedShippingMethod == ShippingMethod.fast,
-      );
+      return MapService.calculateShippingFee(routeResult!.distanceKm);
     }
-    return selectedShippingMethod.fee;
+    return ShopConfig.baseFee;
   }
 
   double get total => subtotal + shippingFee;
-
-  String _shippingFeeLabel(ShippingMethod method) {
-    if (routeResult != null) {
-      final fee = MapService.calculateShippingFee(
-        routeResult!.distanceKm,
-        isFast: method == ShippingMethod.fast,
-      );
-      return '${fee.toStringAsFixed(0)}đ · ${routeResult!.distanceKm.toStringAsFixed(1)} km';
-    }
-    return '${method.fee.toStringAsFixed(0)}đ (tạm tính)';
-  }
 
   Future<void> _fetchRoute(AddressModel address) async {
     if (address.lat == null || address.lng == null) {
@@ -140,8 +123,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDeliveryInfo(),
-              if (selectedAddress != null && selectedAddress!.lat != null) _buildRouteMap(),
-              _buildShippingMethod(),
+              if (selectedAddress != null && selectedAddress!.lat != null)
+                _buildRouteMap(),
+              _buildDeliveryTypeSection(),
               _buildPaymentMethod(),
               _buildOrderItems(),
               _buildNoteSection(),
@@ -160,7 +144,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey.shade400),
+          Icon(
+            Icons.shopping_cart_outlined,
+            size: 80,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 16),
           Text(
             'Giỏ hàng trống',
@@ -197,13 +185,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 1)),
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               const Text(
@@ -224,17 +215,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 10),
-
-          // Content
           if (selectedAddress == null)
             _buildNoAddress()
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name + phone
                 RichText(
                   text: TextSpan(
                     style: const TextStyle(color: Colors.black, fontSize: 14),
@@ -249,17 +236,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       ),
                       TextSpan(
                         text: user?.phone ?? '---',
-                        style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // Address
                 Text(
                   selectedAddress!.fullAddress,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade700,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -282,7 +274,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
             children: [
               Icon(Icons.location_off, color: Colors.grey.shade500, size: 20),
               const SizedBox(width: 10),
-              const Expanded(child: Text('Chưa có địa chỉ giao hàng', style: TextStyle(fontSize: 14))),
+              const Expanded(
+                child: Text(
+                  'Chưa có địa chỉ giao hàng',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
             ],
           ),
         ),
@@ -310,7 +307,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.grey.shade200, blurRadius: 4, offset: const Offset(0, 1)),
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
         ],
       ),
       child: Column(
@@ -337,7 +338,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
           ),
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(12),
+            ),
             child: SizedBox(
               height: 220,
               child: Stack(
@@ -354,7 +357,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.xommoigarden.app',
                       ),
                       if (routeResult != null)
@@ -373,53 +377,86 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             point: ShopConfig.location,
                             width: 44,
                             height: 44,
-                            child: const Icon(Icons.store, color: Colors.orange, size: 36),
+                            child: const Icon(
+                              Icons.store,
+                              color: Colors.orange,
+                              size: 36,
+                            ),
                           ),
                           Marker(
                             point: customer,
                             width: 44,
                             height: 44,
-                            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  // Info overlay
                   if (routeResult != null)
                     Positioned(
                       bottom: 8,
                       left: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 6),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 6,
+                            ),
                           ],
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.near_me, size: 16, color: Colors.green.shade700),
+                            Icon(
+                              Icons.near_me,
+                              size: 16,
+                              color: Colors.green.shade700,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '${routeResult!.distanceKm.toStringAsFixed(1)} km',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(width: 16),
-                            Icon(Icons.access_time, size: 16, color: Colors.blue.shade700),
+                            Icon(
+                              Icons.access_time,
+                              size: 16,
+                              color: Colors.blue.shade700,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '~${routeResult!.durationMinutes.toStringAsFixed(0)} phút',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const Spacer(),
-                            if (!MapService.isDeliverable(routeResult!.distanceKm))
+                            if (!MapService.isDeliverable(
+                              routeResult!.distanceKm,
+                            ))
                               Text(
                                 'Ngoài vùng giao',
-                                style: TextStyle(fontSize: 12, color: Colors.red.shade700, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                           ],
                         ),
@@ -434,7 +471,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildShippingMethod() {
+  Widget _buildDeliveryTypeSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(16),
@@ -453,32 +490,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Hình thức giao hàng',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            'Hình thức nhận hàng',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          RadioListTile<ShippingMethod>(
-            title: const Text('Giao hàng tiêu chuẩn'),
-            subtitle: Text(_shippingFeeLabel(ShippingMethod.standard)),
-            value: ShippingMethod.standard,
-            groupValue: selectedShippingMethod,
-            onChanged: (value) {
-              setState(() => selectedShippingMethod = value!);
-            },
+          RadioListTile<DeliveryType>(
+            title: const Text('Giao hàng tận nơi'),
+            subtitle: Text(
+              routeResult != null
+                  ? '${shippingFee.toStringAsFixed(0)}đ · ${routeResult!.distanceKm.toStringAsFixed(1)} km'
+                  : '${shippingFee.toStringAsFixed(0)}đ (tạm tính)',
+            ),
+            value: DeliveryType.delivery,
+            groupValue: selectedDeliveryType,
+            onChanged: (value) => setState(() => selectedDeliveryType = value!),
             activeColor: Colors.green,
             contentPadding: EdgeInsets.zero,
           ),
-          RadioListTile<ShippingMethod>(
-            title: const Text('FAST Giao Tiết Kiệm'),
-            subtitle: Text(_shippingFeeLabel(ShippingMethod.fast)),
-            value: ShippingMethod.fast,
-            groupValue: selectedShippingMethod,
-            onChanged: (value) {
-              setState(() => selectedShippingMethod = value!);
-            },
+          RadioListTile<DeliveryType>(
+            title: const Text('Tự đến lấy'),
+            subtitle: const Text('Miễn phí giao hàng'),
+            value: DeliveryType.pickup,
+            groupValue: selectedDeliveryType,
+            onChanged: (value) => setState(() => selectedDeliveryType = value!),
             activeColor: Colors.green,
             contentPadding: EdgeInsets.zero,
           ),
@@ -515,48 +549,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           const Text(
             'Hình thức thanh toán',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           RadioListTile<PaymentMethod>(
             title: const Text('Thanh toán tiền mặt'),
             value: PaymentMethod.cod,
             groupValue: selectedPaymentMethod,
-            onChanged: (value) {
-              setState(() {
-                selectedPaymentMethod = value!;
-              });
-            },
+            onChanged: (value) =>
+                setState(() => selectedPaymentMethod = value!),
             activeColor: Colors.green,
             contentPadding: EdgeInsets.zero,
           ),
-          RadioListTile<PaymentMethod>(
-            title: const Text('Viettel Money'),
-            value: PaymentMethod.viettel_money,
-            groupValue: selectedPaymentMethod,
-            onChanged: (value) {
-              setState(() {
-                selectedPaymentMethod = value!;
-              });
-            },
-            activeColor: Colors.green,
-            contentPadding: EdgeInsets.zero,
-          ),
-          RadioListTile<PaymentMethod>(
-            title: const Text('Chuyển khoản ngân hàng'),
-            value: PaymentMethod.banking,
-            groupValue: selectedPaymentMethod,
-            onChanged: (value) {
-              setState(() {
-                selectedPaymentMethod = value!;
-              });
-            },
-            activeColor: Colors.green,
-            contentPadding: EdgeInsets.zero,
-          ),
+          // RadioListTile<PaymentMethod>(
+          //   title: const Text('Viettel Money'),
+          //   value: PaymentMethod.viettel,
+          //   groupValue: selectedPaymentMethod,
+          //   onChanged: (value) => setState(() => selectedPaymentMethod = value!),
+          //   activeColor: Colors.green,
+          //   contentPadding: EdgeInsets.zero,
+          // ),
+          // RadioListTile<PaymentMethod>(
+          //   title: const Text('Chuyển khoản ngân hàng'),
+          //   value: PaymentMethod.banking,
+          //   groupValue: selectedPaymentMethod,
+          //   onChanged: (value) => setState(() => selectedPaymentMethod = value!),
+          //   activeColor: Colors.green,
+          //   contentPadding: EdgeInsets.zero,
+          // ),
         ],
       ),
     );
@@ -582,13 +602,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           const Text(
             'Thông tin đơn hàng',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-
           ...cartController.cartItems.map((item) {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -599,25 +615,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     borderRadius: BorderRadius.circular(8),
                     child: item.product?.imageUrl != null
                         ? Image.network(
-                      item.product!.imageUrl!,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 60,
-                          height: 60,
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.fastfood, size: 30),
-                        );
-                      },
-                    )
+                            item.product!.imageUrl!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.fastfood, size: 30),
+                                ),
+                          )
                         : Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.fastfood, size: 30),
-                    ),
+                            width: 60,
+                            height: 60,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.fastfood, size: 30),
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -633,8 +648,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        if (item.options != null && item.options!.isNotEmpty)
+                        if (item.hasOptions) ...[
+                          const SizedBox(height: 4),
                           Text(
                             item.optionsText,
                             style: TextStyle(
@@ -642,6 +657,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                               color: Colors.grey.shade600,
                             ),
                           ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -670,7 +686,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             );
           }),
-
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -707,10 +722,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           const Text(
             'Ghi chú cho shop',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -726,11 +738,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
             ),
-            onChanged: (value) {
-              note = value;
-            },
+            onChanged: (value) => note = value,
           ),
         ],
       ),
@@ -738,6 +751,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildSummary() {
+    final fee = selectedDeliveryType == DeliveryType.pickup ? 0.0 : shippingFee;
+    final totalVal = subtotal + fee;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       padding: const EdgeInsets.all(16),
@@ -754,13 +770,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ),
       child: Column(
         children: [
-          _buildSummaryRow('Tạm tính (${cartController.totalQuantity} sản phẩm):', '${subtotal.toStringAsFixed(0)}đ'),
+          _buildSummaryRow(
+            'Tạm tính (${cartController.totalQuantity} sản phẩm):',
+            '${subtotal.toStringAsFixed(0)}đ',
+          ),
           const SizedBox(height: 8),
-          _buildSummaryRow('Phí vận chuyển:', '${shippingFee.toStringAsFixed(0)}đ'),
+          _buildSummaryRow(
+            'Phí vận chuyển:',
+            selectedDeliveryType == DeliveryType.pickup
+                ? 'Miễn phí'
+                : '${fee.toStringAsFixed(0)}đ',
+          ),
           const Divider(height: 24),
           _buildSummaryRow(
             'Tổng tiền',
-            '${total.toStringAsFixed(0)}đ',
+            '${totalVal.toStringAsFixed(0)}đ',
             isTotal: true,
             valueColor: Colors.red,
           ),
@@ -769,7 +793,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false, Color? valueColor}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value, {
+    bool isTotal = false,
+    Color? valueColor,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -793,109 +822,115 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildPlaceOrderButton() {
+    final fee = selectedDeliveryType == DeliveryType.pickup ? 0.0 : shippingFee;
+    final totalVal = subtotal + fee;
+
     return Container(
       margin: const EdgeInsets.all(12),
-      child: ElevatedButton(
-        onPressed: orderController.isLoading.value || selectedAddress == null
-            ? null
-            : () async {
-          // Kiểm tra lại trước khi đặt hàng
-          if (selectedAddress == null) {
-            Get.snackbar(
-              'Lỗi',
-              'Vui lòng chọn địa chỉ giao hàng',
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
-            return;
-          }
+      child: Obx(
+        () => ElevatedButton(
+          onPressed: orderController.isLoading.value || selectedAddress == null
+              ? null
+              : () async {
+                  if (selectedAddress == null) {
+                    Get.snackbar(
+                      'Lỗi',
+                      'Vui lòng chọn địa chỉ giao hàng',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
 
-          if (cartController.cartItems.isEmpty) {
-            Get.snackbar(
-              'Lỗi',
-              'Giỏ hàng trống',
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
-            return;
-          }
+                  if (cartController.cartItems.isEmpty) {
+                    Get.snackbar(
+                      'Lỗi',
+                      'Giỏ hàng trống',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
 
-          if (routeResult != null && !MapService.isDeliverable(routeResult!.distanceKm)) {
-            Get.snackbar(
-              'Lỗi',
-              'Địa chỉ giao hàng vượt quá bán kính ${ShopConfig.maxDistanceKm.toStringAsFixed(0)} km',
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-            );
-            return;
-          }
+                  if (routeResult != null &&
+                      !MapService.isDeliverable(routeResult!.distanceKm) &&
+                      selectedDeliveryType == DeliveryType.delivery) {
+                    Get.snackbar(
+                      'Lỗi',
+                      'Địa chỉ giao hàng vượt quá bán kính ${ShopConfig.maxDistanceKm.toStringAsFixed(0)} km',
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
 
-          // Hiển thị dialog xác nhận
-          final confirm = await Get.dialog<bool>(
-            AlertDialog(
-              title: const Text('Xác nhận đặt hàng'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Vui lòng kiểm tra lại thông tin:'),
-                  const SizedBox(height: 12),
-                  Text('• Địa chỉ: ${selectedAddress!.fullAddress}'),
-                  Text('• Phương thức thanh toán: ${selectedPaymentMethod.displayName}'),
-                  Text('• Tổng tiền: ${total.toStringAsFixed(0)}đ'),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Get.back(result: false),
-                  child: const Text('Hủy'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Get.back(result: true),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
-                  child: const Text('Xác nhận'),
-                ),
-              ],
+                  final confirm = await Get.dialog<bool>(
+                    AlertDialog(
+                      title: const Text('Xác nhận đặt hàng'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Vui lòng kiểm tra lại thông tin:'),
+                          const SizedBox(height: 12),
+                          Text('• Địa chỉ: ${selectedAddress!.fullAddress}'),
+                          Text(
+                            '• Thanh toán: ${selectedPaymentMethod.displayName}',
+                          ),
+                          Text('• Tổng tiền: ${totalVal.toStringAsFixed(0)}đ'),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(result: false),
+                          child: const Text('Hủy'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Get.back(result: true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                          child: const Text('Xác nhận'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirm != true) return;
+
+                  final success = await orderController.createOrder(
+                    addressId: selectedAddress!.id,
+                    paymentMethod: selectedPaymentMethod,
+                    deliveryType: selectedDeliveryType,
+                    shippingFee: fee,
+                    note: note,
+                  );
+
+                  if (success) {
+                    Get.offAll(() => const OrderSuccessPage());
+                  }
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          );
-
-          if (confirm != true) return;
-
-          // Tạo đơn hàng
-          final success = await orderController.createOrder(
-            addressId: selectedAddress!.id,
-            paymentMethod: selectedPaymentMethod,
-            shippingMethod: selectedShippingMethod,
-            shippingFee: shippingFee,
-            note: note,
-          );
-
-          if (success) {
-            Get.offAll(() => const OrderSuccessPage());
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        child: orderController.isLoading.value
-            ? const SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
-            : const Text(
-          'ĐẶT HÀNG',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: orderController.isLoading.value
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'ĐẶT HÀNG',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
         ),
       ),
     );

@@ -8,7 +8,6 @@ import 'package:xommoigarden/model/user_model.dart';
 import 'package:xommoigarden/views/user/edit_profile_page.dart';
 import 'package:xommoigarden/views/user/order_history_page.dart';
 
-
 class ProfilePage extends StatelessWidget {
   ProfilePage({super.key});
 
@@ -71,12 +70,12 @@ class ProfilePage extends StatelessWidget {
                       child: ClipOval(
                         child: user.avatarUrl != null
                             ? Image.network(
-                          user.avatarUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildAvatarPlaceholder(user);
-                          },
-                        )
+                                user.avatarUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildAvatarPlaceholder(user);
+                                },
+                              )
                             : _buildAvatarPlaceholder(user),
                       ),
                     ),
@@ -100,42 +99,10 @@ class ProfilePage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        user.role == 'admin'
-                            ? 'Quản trị viên'
-                            : user.role == 'shipper'
-                            ? 'Shipper'
-                            : 'Khách hàng',
+                        user.isAdmin ? 'Quản trị viên' : 'Khách hàng',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
-                    if (user.role == 'shipper') ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            user.shipperRating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 1,
-                            height: 20,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${user.totalDeliveries} đơn',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ],
                   ],
                 ),
               ),
@@ -205,26 +172,7 @@ class ProfilePage extends StatelessWidget {
                               Get.to(() => EditProfilePage());
                             },
                           ),
-                          if (user.role == 'shipper') ...[
-                            _buildDivider(),
-                            _buildMenuTile(
-                              icon: Icons.delivery_dining,
-                              label: 'Quản lý đơn giao',
-                              onTap: () {
-                                // Đi tới trang quản lý đơn của shipper
-                              },
-                            ),
-                            _buildDivider(),
-                            _buildSwitchTile(
-                              icon: Icons.toggle_on_outlined,
-                              label: 'Sẵn sàng nhận đơn',
-                              value: user.isAvailable,
-                              onChanged: (value) {
-                                profileController.updateShipperStatus(value);
-                              },
-                            ),
-                          ],
-                          if (user.role == 'admin') ...[
+                          if (user.isAdmin) ...[
                             _buildDivider(),
                             _buildMenuTile(
                               icon: Icons.dashboard,
@@ -271,7 +219,10 @@ class ProfilePage extends StatelessWidget {
   }) {
     return ListTile(
       leading: Icon(icon, color: Colors.green),
-      title: Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 14, color: Colors.grey),
+      ),
       subtitle: Text(
         value,
         style: TextStyle(
@@ -296,27 +247,8 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSwitchTile({
-    required IconData icon,
-    required String label,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return SwitchListTile(
-      secondary: Icon(icon, color: Colors.green),
-      title: Text(label),
-      value: value,
-      onChanged: onChanged,
-      activeColor: Colors.green,
-    );
-  }
-
   Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: Colors.grey.shade200,
-    );
+    return Divider(height: 1, thickness: 1, color: Colors.grey.shade200);
   }
 
   String _formatDate(DateTime date) {
@@ -329,14 +261,11 @@ class ProfilePage extends StatelessWidget {
         title: const Text('Đăng xuất'),
         content: const Text('Bạn có chắc muốn đăng xuất không?'),
         actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Hủy')),
           TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Hủy'),
-          ),
-          TextButton(
-            onPressed: () {
-              authController.logout();
+            onPressed: () async {
               Get.back();
+              await authController.logout();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Đăng xuất'),

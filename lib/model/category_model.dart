@@ -2,12 +2,18 @@
 class CategoryModel {
   final String id;
   final String name;
+  final String? imageUrl;
+  final int displayOrder;
+  final bool isActive;
   final int productCount;
   final DateTime createdAt;
 
   CategoryModel({
     required this.id,
     required this.name,
+    this.imageUrl,
+    this.displayOrder = 0,
+    this.isActive = true,
     this.productCount = 0,
     required this.createdAt,
   });
@@ -26,6 +32,9 @@ class CategoryModel {
     return CategoryModel(
       id: json['id'] as String,
       name: json['name'] as String,
+      imageUrl: json['image_url'] as String?,
+      displayOrder: json['display_order'] as int? ?? 0,
+      isActive: json['is_active'] as bool? ?? true,
       productCount: count,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -33,9 +42,10 @@ class CategoryModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
-      'created_at': createdAt.toIso8601String(),
+      'image_url': imageUrl,
+      'display_order': displayOrder,
+      'is_active': isActive,
     };
   }
 }

@@ -14,7 +14,8 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
@@ -93,7 +94,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person_add, color: Colors.white, size: 64),
+                      child: const Icon(
+                        Icons.person_add,
+                        color: Colors.white,
+                        size: 64,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     const Text(
@@ -148,7 +153,10 @@ class _RegisterPageState extends State<RegisterPage> {
         const SizedBox(width: 12),
         Text(
           text,
-          style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 15),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.9),
+            fontSize: 15,
+          ),
         ),
       ],
     );
@@ -182,7 +190,11 @@ class _RegisterPageState extends State<RegisterPage> {
               Center(
                 child: Text(
                   'Đăng ký',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -240,60 +252,87 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 10),
 
               // Terms checkbox
-              Obx(() => Row(
-                    children: [
-                      Checkbox(
-                        value: isAcceptedTerms.value,
-                        onChanged: (value) => isAcceptedTerms.value = value ?? false,
-                        activeColor: primaryColor,
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Tôi đồng ý với điều khoản sử dụng',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              Obx(
+                () => Row(
+                  children: [
+                    Checkbox(
+                      value: isAcceptedTerms.value,
+                      onChanged: (value) =>
+                          isAcceptedTerms.value = value ?? false,
+                      activeColor: primaryColor,
+                    ),
+                    Expanded(
+                      child: Text(
+                        'Tôi đồng ý với điều khoản sử dụng',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
                         ),
                       ),
-                    ],
-                  )),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
 
               // Register button
-              Obx(() => SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: (isLoading.value || !isAcceptedTerms.value)
-                          ? null
-                          : () async {
-                              if (_formKey.currentState!.validate()) {
-                                await _handleRegister();
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              Obx(
+                () => SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: (isLoading.value || !isAcceptedTerms.value)
+                        ? null
+                        : () async {
+                            if (_formKey.currentState!.validate()) {
+                              await _handleRegister();
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: isLoading.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                            )
-                          : const Text('Đăng ký', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     ),
-                  )),
+                    child: isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Đăng ký',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 14),
 
               // Login link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Đã có tài khoản? ', style: TextStyle(color: Colors.grey.shade600)),
+                  Text(
+                    'Đã có tài khoản? ',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
                   TextButton(
                     onPressed: () => Get.back(),
                     child: Text(
                       'Đăng nhập',
-                      style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -343,46 +382,61 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildPasswordField() {
-    return Obx(() => TextFormField(
-          controller: passwordController,
-          obscureText: isPasswordHidden.value,
-          decoration: _inputDecoration(
-            'Mật khẩu *',
-            Icons.lock_outline,
-            suffixIcon: IconButton(
-              icon: Icon(isPasswordHidden.value ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => isPasswordHidden.toggle(),
+    return Obx(
+      () => TextFormField(
+        controller: passwordController,
+        obscureText: isPasswordHidden.value,
+        decoration: _inputDecoration(
+          'Mật khẩu *',
+          Icons.lock_outline,
+          suffixIcon: IconButton(
+            icon: Icon(
+              isPasswordHidden.value ? Icons.visibility_off : Icons.visibility,
             ),
+            onPressed: () => isPasswordHidden.toggle(),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
-            if (value.length < 6) return 'Ít nhất 6 ký tự';
-            return null;
-          },
-        ));
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
+          if (value.length < 6) return 'Ít nhất 6 ký tự';
+          return null;
+        },
+      ),
+    );
   }
 
   Widget _buildConfirmPasswordField() {
-    return Obx(() => TextFormField(
-          controller: confirmPasswordController,
-          obscureText: isConfirmPasswordHidden.value,
-          decoration: _inputDecoration(
-            'Xác nhận mật khẩu *',
-            Icons.lock_outline,
-            suffixIcon: IconButton(
-              icon: Icon(isConfirmPasswordHidden.value ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => isConfirmPasswordHidden.toggle(),
+    return Obx(
+      () => TextFormField(
+        controller: confirmPasswordController,
+        obscureText: isConfirmPasswordHidden.value,
+        decoration: _inputDecoration(
+          'Xác nhận mật khẩu *',
+          Icons.lock_outline,
+          suffixIcon: IconButton(
+            icon: Icon(
+              isConfirmPasswordHidden.value
+                  ? Icons.visibility_off
+                  : Icons.visibility,
             ),
+            onPressed: () => isConfirmPasswordHidden.toggle(),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) return 'Vui lòng xác nhận mật khẩu';
-            if (value != passwordController.text) return 'Mật khẩu không khớp';
-            return null;
-          },
-        ));
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty)
+            return 'Vui lòng xác nhận mật khẩu';
+          if (value != passwordController.text) return 'Mật khẩu không khớp';
+          return null;
+        },
+      ),
+    );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffixIcon}) {
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon, {
+    Widget? suffixIcon,
+  }) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
@@ -413,22 +467,14 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (response.user != null) {
-        await Supabase.instance.client.from('users').insert({
-          'id': response.user!.id,
-          'email': email,
-          'full_name': fullName,
-          'phone': phone,
-          'role': 'customer',
-          'status': 'active',
-          'loyalty_points': 0,
-          'is_available': false,
-          'shipper_rating': 5.0,
-          'total_deliveries': 0,
-        });
+        await Supabase.instance.client
+            .from('users')
+            .update({'full_name': fullName, 'phone': phone})
+            .eq('id', response.user!.id);
 
         Get.snackbar(
           'Thành công',
-          'Đăng ký thành công! Vui lòng đăng nhập.',
+          'Đăng ký thành công! Vui lòng kiểm tra gmail để xác nhận tài khoản.',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.green,
           colorText: Colors.white,

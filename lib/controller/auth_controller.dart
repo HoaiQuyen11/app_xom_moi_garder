@@ -2,8 +2,7 @@
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:xommoigarden/model/user_model.dart';
-import 'package:xommoigarden/views/user/my_home_page.dart';
-
+import 'package:xommoigarden/views/pages/login_page.dart';
 
 class ControllerAuth extends GetxController {
   final supabase = Supabase.instance.client;
@@ -46,7 +45,6 @@ class ControllerAuth extends GetxController {
           .single();
 
       currentUser.value = UserModel.fromJson(response);
-
     } catch (e) {
       print('Error fetching user profile: $e');
     }
@@ -66,28 +64,28 @@ class ControllerAuth extends GetxController {
 
       Get.snackbar('Thành công', 'Đăng nhập thành công');
       return true;
-
     } catch (e) {
       Get.snackbar('Lỗi', 'Sai email hoặc mật khẩu');
       return false;
-
     } finally {
       isLoading.value = false;
     }
   }
 
   // Đăng ký
-  Future<bool> register(String email, String password, String fullName, String phone) async {
+  Future<bool> register(
+    String email,
+    String password,
+    String fullName,
+    String phone,
+  ) async {
     try {
       isLoading.value = true;
 
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
-        data: {
-          'full_name': fullName,
-          'phone': phone,
-        },
+        data: {'full_name': fullName, 'phone': phone},
       );
 
       if (response.user != null) {
@@ -96,11 +94,9 @@ class ControllerAuth extends GetxController {
       }
 
       return false;
-
     } catch (e) {
       Get.snackbar('Lỗi', 'Đăng ký thất bại');
       return false;
-
     } finally {
       isLoading.value = false;
     }
@@ -110,8 +106,8 @@ class ControllerAuth extends GetxController {
   Future<void> logout() async {
     await supabase.auth.signOut();
     currentUser.value = null;
-    Get.offAll(() => const MyHomePage());
-    Get.snackbar('Thành công', 'Đã đăng xuất');
+    Get.closeAllSnackbars();
+    Get.offAll(() => const LoginPage());
   }
 
   // Kiểm tra đã đăng nhập chưa

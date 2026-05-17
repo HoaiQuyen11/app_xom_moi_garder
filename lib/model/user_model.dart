@@ -10,10 +10,6 @@ class UserModel {
   final UserRole role;
   final UserStatus status;
   final int loyaltyPoints;
-  final bool isAvailable;
-  final VehicleType? vehicleType;
-  final double shipperRating;
-  final int totalDeliveries;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -26,10 +22,6 @@ class UserModel {
     this.role = UserRole.customer,
     this.status = UserStatus.active,
     this.loyaltyPoints = 0,
-    this.isAvailable = false,
-    this.vehicleType,
-    this.shipperRating = 5.0,
-    this.totalDeliveries = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -44,12 +36,6 @@ class UserModel {
       role: UserRole.fromString(json['role'] ?? 'customer'),
       status: UserStatus.fromString(json['status'] ?? 'active'),
       loyaltyPoints: json['loyalty_points'] as int? ?? 0,
-      isAvailable: json['is_available'] as bool? ?? false,
-      vehicleType: json['vehicle_type'] != null
-          ? VehicleType.fromString(json['vehicle_type'])
-          : null,
-      shipperRating: (json['shipper_rating'] as num?)?.toDouble() ?? 5.0,
-      totalDeliveries: json['total_deliveries'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -65,16 +51,11 @@ class UserModel {
       'role': role.value,
       'status': status.value,
       'loyalty_points': loyaltyPoints,
-      'is_available': isAvailable,
-      'vehicle_type': vehicleType?.value,
-      'shipper_rating': shipperRating,
-      'total_deliveries': totalDeliveries,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
   }
 
-  // Copy với các tham số thay đổi
   UserModel copyWith({
     String? id,
     String? email,
@@ -84,10 +65,6 @@ class UserModel {
     UserRole? role,
     UserStatus? status,
     int? loyaltyPoints,
-    bool? isAvailable,
-    VehicleType? vehicleType,
-    double? shipperRating,
-    int? totalDeliveries,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -100,17 +77,11 @@ class UserModel {
       role: role ?? this.role,
       status: status ?? this.status,
       loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
-      isAvailable: isAvailable ?? this.isAvailable,
-      vehicleType: vehicleType ?? this.vehicleType,
-      shipperRating: shipperRating ?? this.shipperRating,
-      totalDeliveries: totalDeliveries ?? this.totalDeliveries,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  // Helper để kiểm tra role
   bool get isCustomer => role == UserRole.customer;
-  bool get isShipper => role == UserRole.shipper;
   bool get isAdmin => role == UserRole.admin;
 }
