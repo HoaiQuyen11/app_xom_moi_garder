@@ -7,7 +7,6 @@ import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/model/cart_item_model.dart';
 import 'package:xommoigarden/views/pages/login_page.dart';
 import 'package:xommoigarden/views/user/checkout_page.dart';
-import 'package:xommoigarden/views/user/order_page.dart';
 
 
 class CartPage extends StatelessWidget {

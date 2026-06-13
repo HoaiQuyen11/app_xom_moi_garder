@@ -54,9 +54,9 @@ class ProductOption {
   }
 
   Map<String, dynamic> toJson() => {
-        'product_id': productId,
-        'name': name,
-        'values': values.map((v) => v.toJson()).toList(),
-        'is_required': isRequired,
-      };
+    'product_id': productId,
+    'name': name,
+    'values': values.map((v) => v.toJson()).toList(),
+    'is_required': isRequired,
+  };
 }

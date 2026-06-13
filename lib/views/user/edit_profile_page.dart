@@ -29,6 +29,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   @override
+  void dispose() {
+    fullNameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -36,14 +43,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
         centerTitle: true,
         elevation: 0,
         actions: [
-          TextButton(
-            onPressed: _saveProfile,
-            child: const Text(
-              'Lưu',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+          Obx(
+            () => TextButton.icon(
+              onPressed: profileController.isLoading.value
+                  ? null
+                  : _saveProfile,
+              icon: profileController.isLoading.value
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              label: const Text('Lưu'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.green.shade700,
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -53,7 +71,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Avatar
             Center(
               child: Stack(
                 children: [
@@ -68,12 +85,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: ClipOval(
                       child: authController.currentUser.value?.avatarUrl != null
                           ? Image.network(
-                        authController.currentUser.value!.avatarUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildAvatarPlaceholder();
-                        },
-                      )
+                              authController.currentUser.value!.avatarUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return _buildAvatarPlaceholder();
+                              },
+                            )
                           : _buildAvatarPlaceholder(),
                     ),
                   ),
@@ -97,8 +114,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // Họ và tên
             TextField(
               controller: fullNameController,
               decoration: InputDecoration(
@@ -112,8 +127,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Số điện thoại
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
@@ -128,8 +141,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Thông báo
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -155,16 +166,55 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Obx(
+          () => ElevatedButton.icon(
+            onPressed: profileController.isLoading.value ? null : _saveProfile,
+            icon: profileController.isLoading.value
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.save_outlined),
+            label: Text(
+              profileController.isLoading.value
+                  ? 'Đang lưu...'
+                  : 'Lưu thông tin',
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green.shade700,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildAvatarPlaceholder() {
-    final user = authController.currentUser.value;
+    final fullName = authController.currentUser.value?.fullName?.trim();
+    final initial = fullName == null || fullName.isEmpty
+        ? 'U'
+        : fullName.characters.first.toUpperCase();
+
     return Container(
       color: Colors.green.shade100,
       child: Center(
         child: Text(
-          user?.fullName?[0]?.toUpperCase() ?? 'U',
+          initial,
           style: const TextStyle(
             fontSize: 50,
             fontWeight: FontWeight.bold,
@@ -177,8 +227,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   void _saveProfile() async {
     await profileController.updateProfile(
-      fullName: fullNameController.text,
-      phone: phoneController.text,
+      fullName: fullNameController.text.trim(),
+      phone: phoneController.text.trim(),
     );
     Get.back();
   }

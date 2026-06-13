@@ -6,6 +6,7 @@ import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/controller/profile_controller.dart';
 import 'package:xommoigarden/model/user_model.dart';
 import 'package:xommoigarden/views/user/edit_profile_page.dart';
+import 'package:xommoigarden/views/user/loyalty_history_page.dart';
 import 'package:xommoigarden/views/user/order_history_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -162,6 +163,14 @@ class ProfilePage extends StatelessWidget {
                             label: 'Lịch sử đơn hàng',
                             onTap: () {
                               Get.to(() => const OrderHistoryPage());
+                            },
+                          ),
+                          _buildDivider(),
+                          _buildMenuTile(
+                            icon: Icons.stars_outlined,
+                            label: 'Lịch sử tích điểm',
+                            onTap: () {
+                              Get.to(() => const LoyaltyHistoryPage());
                             },
                           ),
                           _buildDivider(),

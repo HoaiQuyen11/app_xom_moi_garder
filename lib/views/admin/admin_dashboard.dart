@@ -4,11 +4,14 @@ import 'package:get/get.dart';
 import 'package:xommoigarden/controller/admin_controller.dart';
 import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/model/enums.dart';
+import 'package:xommoigarden/model/notification_model.dart';
 import 'package:xommoigarden/views/admin/admin_categories.dart';
 
 import 'package:xommoigarden/views/admin/admin_orders.dart';
 import 'package:xommoigarden/views/admin/admin_products.dart';
+import 'package:xommoigarden/views/admin/admin_statistics.dart';
 import 'package:xommoigarden/views/admin/admin_users.dart';
+import 'package:xommoigarden/views/admin/admin_vouchers.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -22,11 +25,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-    DashboardContent(),
+    const AdminStatistics(),
     const AdminProducts(),
     const AdminOrders(),
     const AdminUsers(),
     AdminCategories(),
+    const AdminVouchers(),
   ];
 
   final List<String> _titles = [
@@ -35,6 +39,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Quản lý đơn hàng',
     'Quản lý người dùng',
     'Quản lý danh mục',
+    'Quản lý voucher',
   ];
 
   @override
@@ -53,9 +58,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             labelType: NavigationRailLabelType.selected,
             destinations: [
               NavigationRailDestination(
-                icon: Icon(Icons.dashboard),
-                selectedIcon: Icon(Icons.dashboard),
-                label: Text('Dashboard'),
+                icon: Icon(Icons.query_stats_outlined),
+                selectedIcon: Icon(Icons.query_stats),
+                label: Text('Thống kê'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.inventory),
@@ -77,6 +82,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 selectedIcon: Icon(Icons.category),
                 label: Text('Danh mục'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.confirmation_number_outlined),
+                selectedIcon: Icon(Icons.confirmation_number),
+                label: Text('Voucher'),
+              ),
             ],
           ),
           const VerticalDivider(thickness: 1, width: 1),
@@ -84,13 +94,48 @@ class _AdminDashboardState extends State<AdminDashboard> {
           Expanded(
             child: Scaffold(
               appBar: AppBar(
-                title: Text(_titles[_selectedIndex]),
+                title: Text(
+                  _selectedIndex == 0 ? 'Thống kê' : _titles[_selectedIndex],
+                ),
                 centerTitle: false,
                 elevation: 0,
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {},
+                  Obx(
+                    () => Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications),
+                          onPressed: _showNotifications,
+                        ),
+                        if (adminController.unreadNotifications.value > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade600,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                adminController.unreadNotifications.value > 9
+                                    ? '9+'
+                                    : adminController.unreadNotifications.value
+                                          .toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) async {
@@ -115,7 +160,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                           children: [
                             Icon(Icons.logout, size: 20, color: Colors.red),
                             SizedBox(width: 10),
-                            Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                            Text(
+                              'Đăng xuất',
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ],
                         ),
                       ),
@@ -129,6 +177,112 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ],
       ),
     );
+  }
+
+  Future<void> _showNotifications() async {
+    await adminController.syncReadyOrderNotifications();
+    await adminController.fetchNotifications();
+
+    Get.dialog(
+      AlertDialog(
+        titlePadding: const EdgeInsets.fromLTRB(20, 18, 8, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+        title: Row(
+          children: [
+            const Expanded(child: Text('Thông báo')),
+            TextButton(
+              onPressed: () => adminController.markAllNotificationsRead(),
+              child: const Text('Đã đọc hết'),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 420,
+          child: Obx(() {
+            if (adminController.isLoadingNotifications.value) {
+              return const SizedBox(
+                height: 160,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (adminController.notifications.isEmpty) {
+              return SizedBox(
+                height: 140,
+                child: Center(
+                  child: Text(
+                    'Chưa có thông báo nào',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+              );
+            }
+
+            return ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 420),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: adminController.notifications.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final notification = adminController.notifications[index];
+                  return _buildNotificationTile(notification);
+                },
+              ),
+            );
+          }),
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Đóng')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationTile(NotificationModel notification) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: notification.isRead
+            ? Colors.grey.shade100
+            : Colors.orange.shade50,
+        child: Icon(
+          Icons.receipt_long,
+          color: notification.isRead
+              ? Colors.grey.shade600
+              : Colors.orange.shade700,
+        ),
+      ),
+      title: Text(
+        notification.title,
+        style: TextStyle(
+          fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(notification.message),
+          const SizedBox(height: 2),
+          Text(
+            _formatNotificationTime(notification.createdAt),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+      onTap: () async {
+        await adminController.markNotificationRead(notification.id);
+        if (notification.relatedOrderId != null) {
+          setState(() => _selectedIndex = 2);
+          Get.back();
+        }
+      },
+    );
+  }
+
+  String _formatNotificationTime(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 

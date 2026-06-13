@@ -5,6 +5,8 @@ import 'user_model.dart';
 import 'order_item_model.dart';
 
 class OrderModel {
+  static const Duration cancelWindow = Duration(seconds: 15);
+
   final String id;
   final String? orderCode;
   final String userId;
@@ -61,7 +63,9 @@ class OrderModel {
       userId: json['user_id'] as String,
       addressId: json['address_id'] as String?,
       voucherId: json['voucher_id'] as String?,
-      deliveryType: DeliveryType.fromString(json['delivery_type'] ?? 'delivery'),
+      deliveryType: DeliveryType.fromString(
+        json['delivery_type'] ?? 'delivery',
+      ),
       note: json['note'] as String?,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
       shippingFee: (json['shipping_fee'] as num?)?.toDouble() ?? 0,
@@ -69,7 +73,9 @@ class OrderModel {
       totalAmount: (json['total_amount'] as num).toDouble(),
       status: OrderStatus.fromString(json['status'] ?? 'pending'),
       paymentMethod: PaymentMethod.fromString(json['payment_method'] ?? 'cod'),
-      paymentStatus: PaymentStatus.fromString(json['payment_status'] ?? 'pending'),
+      paymentStatus: PaymentStatus.fromString(
+        json['payment_status'] ?? 'pending',
+      ),
       cancelReason: json['cancel_reason'] as String?,
       cancelledAt: json['cancelled_at'] != null
           ? DateTime.parse(json['cancelled_at'] as String)
@@ -115,6 +121,14 @@ class OrderModel {
   bool get isCompleted => status == OrderStatus.completed;
   bool get isCancelled => status == OrderStatus.cancelled;
   bool get isPaid => paymentStatus == PaymentStatus.paid;
-  bool get canCancel => status == OrderStatus.pending;
+  DateTime get cancelDeadline => createdAt.add(cancelWindow);
+  Duration get cancelTimeRemaining => cancelDeadline.difference(DateTime.now());
+  int get cancelSecondsRemaining {
+    final seconds = cancelTimeRemaining.inSeconds;
+    return seconds > 0 ? seconds : 0;
+  }
+
+  bool get canCancel =>
+      status == OrderStatus.pending && cancelTimeRemaining > Duration.zero;
   bool get canReview => status == OrderStatus.completed;
 }

@@ -1,6 +1,7 @@
 // lib/binding/app_binding.dart
 import 'package:get/get.dart';
 import 'package:xommoigarden/controller/address_controller.dart';
+import 'package:xommoigarden/controller/ai_food_assistant_controller.dart';
 import 'package:xommoigarden/controller/admin_controller.dart';
 import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/controller/cart_controller.dart';
@@ -9,6 +10,7 @@ import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/controller/product_controller.dart';
 import 'package:xommoigarden/controller/profile_controller.dart';
 import 'package:xommoigarden/controller/review_controller.dart';
+import 'package:xommoigarden/controller/voucher_controller.dart';
 
 class BindingApp extends Bindings {
   @override
@@ -31,10 +33,12 @@ class BindingApp extends Bindings {
     // Review controller
     Get.lazyPut(() => ControllerReview(), fenix: true);
 
-    // Address controller - Thêm dòng này
+    Get.lazyPut(() => ControllerVoucher(), fenix: true);
+
     Get.lazyPut(() => ControllerAddress(), fenix: true);
 
-    // Category controller - Thêm dòng này
+    Get.lazyPut(() => AiFoodAssistantController(), fenix: true);
+
     Get.lazyPut(() => CategoryController(), fenix: true);
 
     // Admin controller - Thêm dòng này

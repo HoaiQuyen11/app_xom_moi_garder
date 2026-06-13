@@ -7,9 +7,9 @@ enum UserRole {
 
   String get value => name;
   static UserRole fromString(String value) => UserRole.values.firstWhere(
-        (e) => e.name == value,
-        orElse: () => UserRole.customer,
-      );
+    (e) => e.name == value,
+    orElse: () => UserRole.customer,
+  );
 
   String get displayName {
     switch (this) {
@@ -28,9 +28,9 @@ enum UserStatus {
 
   String get value => name;
   static UserStatus fromString(String value) => UserStatus.values.firstWhere(
-        (e) => e.name == value,
-        orElse: () => UserStatus.active,
-      );
+    (e) => e.name == value,
+    orElse: () => UserStatus.active,
+  );
 
   String get displayName {
     switch (this) {
@@ -65,9 +65,9 @@ enum OrderStatus {
 
   String get value => name;
   static OrderStatus fromString(String value) => OrderStatus.values.firstWhere(
-        (e) => e.name == value,
-        orElse: () => OrderStatus.pending,
-      );
+    (e) => e.name == value,
+    orElse: () => OrderStatus.pending,
+  );
 
   String get displayName {
     switch (this) {
@@ -96,7 +96,7 @@ enum PaymentMethod {
   String get value => name;
   static PaymentMethod fromString(String value) {
     return PaymentMethod.values.firstWhere(
-          (e) => e.name == value,
+      (e) => e.name == value,
       orElse: () => PaymentMethod.cod,
     );
   }
@@ -121,10 +121,8 @@ enum PaymentStatus {
   failed;
 
   String get value => name;
-  static PaymentStatus fromString(String value) => PaymentStatus.values.firstWhere(
-        (e) => e.name == value,
-        orElse: () => PaymentStatus.pending,
-      );
+  static PaymentStatus fromString(String value) => PaymentStatus.values
+      .firstWhere((e) => e.name == value, orElse: () => PaymentStatus.pending);
 
   String get displayName {
     switch (this) {
@@ -143,10 +141,8 @@ enum DeliveryType {
   delivery;
 
   String get value => name;
-  static DeliveryType fromString(String value) => DeliveryType.values.firstWhere(
-        (e) => e.name == value,
-        orElse: () => DeliveryType.delivery,
-      );
+  static DeliveryType fromString(String value) => DeliveryType.values
+      .firstWhere((e) => e.name == value, orElse: () => DeliveryType.delivery);
 
   String get displayName {
     switch (this) {
@@ -154,6 +150,30 @@ enum DeliveryType {
         return 'Tự đến lấy';
       case DeliveryType.delivery:
         return 'Giao hàng tận nơi';
+    }
+  }
+}
+
+enum NotificationType {
+  order,
+  system,
+  promotion;
+
+  String get value => name;
+  static NotificationType fromString(String value) =>
+      NotificationType.values.firstWhere(
+        (e) => e.name == value,
+        orElse: () => NotificationType.system,
+      );
+
+  String get displayName {
+    switch (this) {
+      case NotificationType.order:
+        return 'Đơn hàng';
+      case NotificationType.system:
+        return 'Hệ thống';
+      case NotificationType.promotion:
+        return 'Khuyến mãi';
     }
   }
 }

@@ -5,6 +5,7 @@ import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/model/enums.dart';
 import 'package:xommoigarden/model/order_model.dart';
 import 'order_detail_page.dart';
+import 'order_review_page.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   const OrderHistoryPage({super.key});
@@ -37,10 +38,16 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     if (status == null) return orderController.orders.toList();
     if (status == OrderStatus.preparing) {
       return orderController.orders
-          .where((o) => o.status == OrderStatus.confirmed || o.status == OrderStatus.preparing)
+          .where(
+            (order) =>
+                order.status == OrderStatus.confirmed ||
+                order.status == OrderStatus.preparing,
+          )
           .toList();
     }
-    return orderController.orders.where((o) => o.status == status).toList();
+    return orderController.orders
+        .where((order) => order.status == status)
+        .toList();
   }
 
   @override
@@ -48,7 +55,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Đơn hàng của tôi', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: const Text(
+          'Đơn hàng của tôi',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
         elevation: 0.5,
         backgroundColor: Colors.white,
@@ -56,7 +66,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       ),
       body: Column(
         children: [
-          // Filter chips
           Container(
             height: 52,
             color: Colors.white,
@@ -66,23 +75,30 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               itemCount: filters.length,
               separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final f = filters[index];
+                final filter = filters[index];
                 final isActive = index == selectedIndex;
                 return GestureDetector(
                   onTap: () => setState(() => selectedIndex = index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: isActive ? Colors.green.shade700 : Colors.grey.shade100,
+                      color: isActive
+                          ? Colors.green.shade700
+                          : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      f.label,
+                      filter.label,
                       style: TextStyle(
                         color: isActive ? Colors.white : Colors.grey.shade700,
                         fontSize: 13,
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                       ),
                     ),
                   ),
@@ -91,11 +107,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             ),
           ),
           Divider(height: 1, color: Colors.grey.shade200),
-
-          // Orders list
           Expanded(
             child: Obx(() {
-              if (orderController.isLoading.value && orderController.orders.isEmpty) {
+              if (orderController.isLoading.value &&
+                  orderController.orders.isEmpty) {
                 return const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
@@ -104,10 +119,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               }
 
               final orders = _filterOrders(filters[selectedIndex].status);
-
-              if (orders.isEmpty) {
-                return _buildEmpty();
-              }
+              if (orders.isEmpty) return _buildEmpty();
 
               return RefreshIndicator(
                 onRefresh: () => orderController.fetchOrders(),
@@ -115,8 +127,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(12),
                   itemCount: orders.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _buildOrderCard(orders[index]),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemBuilder: (context, index) =>
+                      _buildOrderCard(orders[index]),
                 ),
               );
             }),
@@ -140,10 +154,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.receipt_long, size: 18, color: Colors.grey.shade600),
+                  Icon(
+                    Icons.receipt_long,
+                    size: 18,
+                    color: Colors.grey.shade600,
+                  ),
                   const SizedBox(width: 6),
                   Text(
-                    '#${order.id.substring(0, 8).toUpperCase()}',
+                    '#${order.displayCode}',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -154,23 +172,28 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   _buildStatusChip(order.status),
                 ],
               ),
-
               const SizedBox(height: 10),
               Divider(height: 1, color: Colors.grey.shade200),
               const SizedBox(height: 10),
-
               if (order.address?.fullAddress != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.location_on_outlined, size: 16, color: Colors.grey.shade500),
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: Colors.grey.shade500,
+                      ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           order.address!.fullAddress,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -178,10 +201,13 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     ],
                   ),
                 ),
-
               Row(
                 children: [
-                  Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
+                  Icon(
+                    Icons.access_time,
+                    size: 14,
+                    color: Colors.grey.shade500,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(order.createdAt),
@@ -193,44 +219,72 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   Expanded(
                     child: Text(
                       order.paymentMethod.displayName,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 10),
-
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Text(
-                    'Tổng tiền:',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    order.formattedTotal,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red.shade700,
+                  SizedBox(
+                    width: order.canReview ? 120 : 150,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Tổng tiền:',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            order.formattedTotal,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Text(
-                        'Xem chi tiết',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
+                  if (order.canReview)
+                    TextButton.icon(
+                      onPressed: () =>
+                          Get.to(() => OrderReviewPage(order: order)),
+                      icon: const Icon(Icons.rate_review_outlined, size: 16),
+                      label: const Text('Đánh giá'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.orange.shade700,
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        visualDensity: VisualDensity.compact,
                       ),
-                      Icon(Icons.chevron_right, size: 18, color: Colors.green.shade700),
-                    ],
+                    ),
+                  TextButton.icon(
+                    onPressed: () =>
+                        Get.to(() => OrderDetailPage(orderId: order.id)),
+                    icon: const Icon(Icons.visibility_outlined, size: 16),
+                    label: const Text('Xem chi tiết'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.green.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ),
                 ],
               ),
@@ -256,7 +310,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           const SizedBox(width: 4),
           Text(
             status.displayName,
-            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -285,11 +343,19 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey.shade300),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 80,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 14),
           Text(
             'Chưa có đơn hàng nào',
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -305,7 +371,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               backgroundColor: Colors.green.shade700,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],

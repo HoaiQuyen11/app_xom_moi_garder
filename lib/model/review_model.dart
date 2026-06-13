@@ -6,6 +6,7 @@ class ReviewModel {
   final String id;
   final String userId;
   final String productId;
+  final String? orderId;
   final int rating;
   final String? comment;
   final DateTime createdAt;
@@ -18,6 +19,7 @@ class ReviewModel {
     required this.id,
     required this.userId,
     required this.productId,
+    this.orderId,
     required this.rating,
     this.comment,
     required this.createdAt,
@@ -30,12 +32,11 @@ class ReviewModel {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       productId: json['product_id'] as String,
+      orderId: json['order_id'] as String?,
       rating: json['rating'] as int,
       comment: json['comment'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
-      user: json['users'] != null
-          ? UserModel.fromJson(json['users'])
-          : null,
+      user: json['users'] != null ? UserModel.fromJson(json['users']) : null,
       product: json['products'] != null
           ? ProductModel.fromJson(json['products'])
           : null,
@@ -47,6 +48,7 @@ class ReviewModel {
       'id': id,
       'user_id': userId,
       'product_id': productId,
+      'order_id': orderId,
       'rating': rating,
       'comment': comment,
       'created_at': createdAt.toIso8601String(),

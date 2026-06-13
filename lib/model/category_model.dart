@@ -22,7 +22,9 @@ class CategoryModel {
     int count = 0;
     if (json['products'] is List) {
       final products = json['products'] as List;
-      if (products.isNotEmpty && products.first is Map && products.first.containsKey('count')) {
+      if (products.isNotEmpty &&
+          products.first is Map &&
+          products.first.containsKey('count')) {
         count = products.first['count'] as int? ?? 0;
       } else {
         count = products.length;

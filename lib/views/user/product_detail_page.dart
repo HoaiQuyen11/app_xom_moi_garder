@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:xommoigarden/controller/cart_controller.dart';
 import 'package:xommoigarden/model/product_model.dart';
 import 'package:xommoigarden/model/product_option_model.dart';
+import 'package:xommoigarden/views/user/product_reviews_page.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final ProductModel product;
@@ -113,46 +114,95 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         ? Image.network(
                             product.imageUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.fastfood, size: 80, color: Colors.grey),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(
+                                    Icons.fastfood,
+                                    size: 80,
+                                    color: Colors.grey,
+                                  ),
+                                ),
                           )
                         : Container(
                             color: Colors.grey.shade200,
-                            child: const Icon(Icons.fastfood, size: 80, color: Colors.grey),
+                            child: const Icon(
+                              Icons.fastfood,
+                              size: 80,
+                              color: Colors.grey,
+                            ),
                           ),
                   ),
 
                   // Tên sản phẩm
                   Padding(
                     padding: const EdgeInsets.all(12.0),
-                    child: Text(
-                      product.name,
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.name,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 
                   // Rating + reviews
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 18),
-                        const SizedBox(width: 4),
-                        Text(product.ratingDisplay, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 20),
-                        const Icon(Icons.favorite, color: Colors.pink, size: 18),
-                        const SizedBox(width: 4),
-                        Text('${product.totalReviews}', style: const TextStyle(fontSize: 14)),
-                      ],
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () =>
+                          Get.to(() => ProductReviewsPage(product: product)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              product.ratingDisplay,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(width: 20),
+                            const Icon(
+                              Icons.rate_review_outlined,
+                              color: Colors.blueGrey,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${product.totalReviews}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.chevron_right,
+                              color: Colors.grey.shade500,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 
                   const SizedBox(height: 16),
 
                   // Mô tả
-                  if (product.description != null && product.description!.isNotEmpty)
+                  if (product.description != null &&
+                      product.description!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: Column(
@@ -160,12 +210,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         children: [
                           const Text(
                             'Mô tả sản phẩm',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             product.description!,
-                            style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.5),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade700,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -186,7 +243,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               const SizedBox(height: 16),
                               Text(
                                 '${opt.name}${opt.isRequired ? ' *' : ''}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               ...opt.values.map((val) {
@@ -194,13 +254,20 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   margin: const EdgeInsets.only(bottom: 8),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.green.shade200),
+                                    border: Border.all(
+                                      color: Colors.green.shade200,
+                                    ),
                                   ),
                                   child: RadioListTile<String>(
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     value: val.label,
                                     groupValue: selectedValues[opt.id]?.label,
-                                    title: Text(val.label, style: const TextStyle(fontSize: 16)),
+                                    title: Text(
+                                      val.label,
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
                                     secondary: Text(
                                       val.formattedPrice,
                                       style: TextStyle(
@@ -209,7 +276,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    onChanged: (_) => setState(() => selectedValues[opt.id] = val),
+                                    onChanged: (_) => setState(
+                                      () => selectedValues[opt.id] = val,
+                                    ),
                                     activeColor: Colors.green,
                                   ),
                                 );
@@ -233,7 +302,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 8, offset: const Offset(0, -2)),
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
           ],
         ),
         child: SafeArea(
@@ -254,21 +327,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         if (quantity > 1) setState(() => quantity--);
                       },
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
                     ),
                     SizedBox(
                       width: 40,
                       child: Text(
                         '$quantity',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.add, size: 20),
                       onPressed: () => setState(() => quantity++),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
                     ),
                   ],
                 ),
@@ -283,7 +365,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
                       elevation: 0,
                     ),
                     onPressed: () async {
@@ -319,7 +403,10 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         const SizedBox(width: 8),
                         Text(
                           'Thêm vào giỏ • ${_calcTotal().toStringAsFixed(0)}đ',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),

@@ -8,12 +8,14 @@ import 'package:xommoigarden/controller/auth_controller.dart';
 import 'package:xommoigarden/controller/cart_controller.dart';
 import 'package:xommoigarden/controller/order_controller.dart';
 import 'package:xommoigarden/controller/address_controller.dart';
+import 'package:xommoigarden/controller/voucher_controller.dart';
 import 'package:xommoigarden/model/address_model.dart';
 import 'package:xommoigarden/model/enums.dart';
 import 'package:xommoigarden/services/map_service.dart';
 import 'add_address_page.dart';
 import 'order_success_page.dart';
 import 'select_address_page.dart';
+import 'voucher_page.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -27,10 +29,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
   final ControllerOrder orderController = Get.find<ControllerOrder>();
   final ControllerAuth authController = Get.find<ControllerAuth>();
   final ControllerAddress addressController = Get.put(ControllerAddress());
+  final ControllerVoucher voucherController = Get.find<ControllerVoucher>();
 
   AddressModel? selectedAddress;
   DeliveryType selectedDeliveryType = DeliveryType.delivery;
   PaymentMethod selectedPaymentMethod = PaymentMethod.cod;
+  bool useLoyaltyPoints = false;
   String note = '';
 
   final TextEditingController noteController = TextEditingController();
@@ -76,7 +80,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return ShopConfig.baseFee;
   }
 
-  double get total => subtotal + shippingFee;
+  double get discountAmount {
+    final applied = voucherController.appliedVoucher.value;
+    if (applied == null) return 0;
+    return voucherController.calculateDiscount(applied.voucher, subtotal);
+  }
+
+  int get availableLoyaltyPoints =>
+      authController.currentUser.value?.loyaltyPoints ?? 0;
+
+  int get maxUsableLoyaltyPoints {
+    final fee = selectedDeliveryType == DeliveryType.pickup ? 0.0 : shippingFee;
+    final remaining = subtotal + fee - discountAmount;
+    if (remaining <= 0 || availableLoyaltyPoints <= 0) return 0;
+    return availableLoyaltyPoints.clamp(0, remaining.floor()).toInt();
+  }
+
+  int get loyaltyPointsToUse {
+    if (!useLoyaltyPoints) return 0;
+    return maxUsableLoyaltyPoints;
+  }
+
+  double get loyaltyDiscountAmount => loyaltyPointsToUse.toDouble();
+
+  double get total =>
+      subtotal + shippingFee - discountAmount - loyaltyDiscountAmount;
+
+  @override
+  void dispose() {
+    noteController.dispose();
+    super.dispose();
+  }
 
   Future<void> _fetchRoute(AddressModel address) async {
     if (address.lat == null || address.lng == null) {
@@ -129,7 +163,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
               _buildPaymentMethod(),
               _buildOrderItems(),
               _buildNoteSection(),
-              _buildSummary(),
+              _buildVoucherSection(),
+              Obx(() => _buildLoyaltySection()),
+              Obx(() => _buildSummary()),
               _buildPlaceOrderButton(),
               const SizedBox(height: 20),
             ],
@@ -582,6 +618,151 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Widget _buildVoucherSection() {
+    return Obx(() {
+      final applied = voucherController.appliedVoucher.value;
+      final trailingText = applied == null
+          ? 'Chọn hoặc nhập mã'
+          : '${applied.voucher.code} - Giảm ${discountAmount.toStringAsFixed(0)}đ';
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Get.to(() => VoucherPage(subtotal: subtotal)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.confirmation_number_outlined,
+                  color: Colors.red.shade400,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Voucher',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    trailingText,
+                    textAlign: TextAlign.right,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: applied == null
+                          ? Colors.grey.shade500
+                          : Colors.green.shade700,
+                      fontWeight: applied == null
+                          ? FontWeight.normal
+                          : FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: Colors.grey.shade400,
+                  size: 28,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildLoyaltySection() {
+    final points = availableLoyaltyPoints;
+    final usablePoints = maxUsableLoyaltyPoints;
+    final canUse = usablePoints > 0;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        child: Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.orange.shade50,
+              ),
+              child: Center(
+                child: Text(
+                  'S',
+                  style: TextStyle(
+                    color: Colors.orange.shade600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                points <= 0
+                    ? 'Bạn chưa có Tích điểm'
+                    : 'Dùng $usablePoints Tích điểm',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            Switch(
+              value: useLoyaltyPoints && canUse,
+              onChanged: canUse
+                  ? (value) => setState(() => useLoyaltyPoints = value)
+                  : null,
+              activeThumbColor: Colors.green,
+              activeTrackColor: Colors.green.shade100,
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: Colors.grey.shade200,
+              trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrderItems() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -752,7 +933,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _buildSummary() {
     final fee = selectedDeliveryType == DeliveryType.pickup ? 0.0 : shippingFee;
-    final totalVal = subtotal + fee;
+    final discount = discountAmount;
+    final pointDiscount = loyaltyDiscountAmount;
+    final totalVal = subtotal + fee - discount - pointDiscount;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -781,10 +964,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ? 'Miễn phí'
                 : '${fee.toStringAsFixed(0)}đ',
           ),
+          if (discount > 0) ...[
+            const SizedBox(height: 8),
+            _buildSummaryRow(
+              'Mã giảm giá:',
+              '-${discount.toStringAsFixed(0)}đ',
+              valueColor: Colors.green.shade700,
+            ),
+          ],
+          if (pointDiscount > 0) ...[
+            const SizedBox(height: 8),
+            _buildSummaryRow(
+              'Điểm tích lũy:',
+              '-${pointDiscount.toStringAsFixed(0)}đ',
+              valueColor: Colors.green.shade700,
+            ),
+          ],
           const Divider(height: 24),
           _buildSummaryRow(
             'Tổng tiền',
-            '${totalVal.toStringAsFixed(0)}đ',
+            '${totalVal.clamp(0, double.infinity).toStringAsFixed(0)}đ',
             isTotal: true,
             valueColor: Colors.red,
           ),
@@ -823,7 +1022,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _buildPlaceOrderButton() {
     final fee = selectedDeliveryType == DeliveryType.pickup ? 0.0 : shippingFee;
-    final totalVal = subtotal + fee;
 
     return Container(
       margin: const EdgeInsets.all(12),
@@ -867,30 +1065,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   final confirm = await Get.dialog<bool>(
                     AlertDialog(
                       title: const Text('Xác nhận đặt hàng'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Vui lòng kiểm tra lại thông tin:'),
-                          const SizedBox(height: 12),
-                          Text('• Địa chỉ: ${selectedAddress!.fullAddress}'),
-                          Text(
-                            '• Thanh toán: ${selectedPaymentMethod.displayName}',
-                          ),
-                          Text('• Tổng tiền: ${totalVal.toStringAsFixed(0)}đ'),
-                        ],
-                      ),
                       actions: [
-                        TextButton(
-                          onPressed: () => Get.back(result: false),
-                          child: const Text('Hủy'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Get.back(result: true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                          ),
-                          child: const Text('Xác nhận'),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: () => Get.back(result: false),
+                              child: const Text('Hủy'),
+                            ),
+
+                            ElevatedButton(
+                              onPressed: () => Get.back(result: true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                              ),
+                              child: const Text('Xác nhận'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -898,15 +1089,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
                   if (confirm != true) return;
 
+                  final applied = voucherController.appliedVoucher.value;
+                  if (applied != null) {
+                    final validationMessage = voucherController.validateVoucher(
+                      applied.voucher,
+                      subtotal,
+                    );
+                    if (validationMessage != null) {
+                      voucherController.clearAppliedVoucher();
+                      Get.snackbar(
+                        'Không áp dụng được mã',
+                        validationMessage,
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+                  }
+
                   final success = await orderController.createOrder(
                     addressId: selectedAddress!.id,
                     paymentMethod: selectedPaymentMethod,
                     deliveryType: selectedDeliveryType,
                     shippingFee: fee,
+                    voucherId: applied?.voucher.id,
+                    discountAmount: applied == null ? 0 : discountAmount,
+                    loyaltyPointsToUse: loyaltyPointsToUse,
                     note: note,
                   );
 
                   if (success) {
+                    voucherController.clearAppliedVoucher();
                     Get.offAll(() => const OrderSuccessPage());
                   }
                 },

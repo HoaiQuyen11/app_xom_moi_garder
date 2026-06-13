@@ -7,6 +7,8 @@ import 'package:xommoigarden/controller/cart_controller.dart';
 import 'package:xommoigarden/controller/product_controller.dart';
 import 'package:xommoigarden/model/product_model.dart';
 import 'package:xommoigarden/views/pages/login_page.dart';
+import 'package:xommoigarden/views/user/ai_food_assistant_page.dart';
+import 'package:xommoigarden/views/user/product_reviews_page.dart';
 import 'package:xommoigarden/views/user/search_product.dart';
 import 'package:xommoigarden/views/widgets/product_quantity_control.dart';
 
@@ -118,22 +120,40 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        const Text(
-                          "4.8",
-                          style: TextStyle(fontSize: 14, color: Colors.black),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.favorite,
-                          color: Colors.pink,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          "1.2k",
-                          style: TextStyle(fontSize: 14, color: Colors.black),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => Get.to(() => const ProductReviewsPage()),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  "4.8",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.reviews,
+                                  color: Colors.blueGrey,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  "1.2k",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                         const Icon(
@@ -243,9 +263,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   _buildCircleIcon(icon: Icons.call, onTap: () {}),
                   const SizedBox(width: 8),
-                  _buildCircleIcon(icon: Icons.chat_outlined, onTap: () {}),
-                  const SizedBox(width: 8),
-                  _buildCircleIcon(icon: Icons.favorite_border, onTap: () {}),
+                  _buildCircleIcon(
+                    icon: Icons.auto_awesome,
+                    onTap: () {
+                      Get.to(() => const AiFoodAssistantPage());
+                    },
+                  ),
                   const SizedBox(width: 8),
                   _buildCircleIcon(
                     icon: Icons.search,
@@ -387,6 +410,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  //menu cạnh
   Widget _buildDrawer() {
     return Drawer(
       child: Container(
@@ -443,6 +467,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     Get.to(() => OrderHistoryPage());
                   },
                 ),
+              ListTile(
+                leading: const Icon(Icons.auto_awesome),
+                title: const Text("Trợ lý chọn món AI"),
+                onTap: () {
+                  Navigator.pop(context);
+                  Get.to(() => const AiFoodAssistantPage());
+                },
+              ),
               if (authController.isLoggedIn)
                 ListTile(
                   leading: const Icon(Icons.logout),
@@ -851,21 +883,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // FAVORITE
-                  Row(
-                    children: const [
-                      Icon(
-                        Icons.favorite_border,
-                        size: 16,
-                        color: Colors.orange,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        "0",
-                        style: TextStyle(color: Colors.orange, fontSize: 14),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),

@@ -29,17 +29,27 @@ class _SearchProductPageState extends State<SearchProductPage> {
   bool showAllHistory = false;
 
   Timer? _debounce;
+  Worker? _productsWorker;
 
   @override
   void initState() {
     super.initState();
     _loadSearchHistory();
     searchCtrl.addListener(() => setState(() {}));
+    _productsWorker = ever<List<ProductModel>>(productController.products, (_) {
+      if (!mounted) return;
+      if (isSearching && searchCtrl.text.trim().isNotEmpty) {
+        _performSearch(searchCtrl.text);
+      } else {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _productsWorker?.dispose();
     searchCtrl.dispose();
     searchFocus.dispose();
     super.dispose();
@@ -163,7 +173,11 @@ class _SearchProductPageState extends State<SearchProductPage> {
           decoration: InputDecoration(
             hintText: 'Tìm kiếm sản phẩm...',
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
-            prefixIcon: Icon(Icons.search, color: Colors.grey.shade500, size: 22),
+            prefixIcon: Icon(
+              Icons.search,
+              color: Colors.grey.shade500,
+              size: 22,
+            ),
             suffixIcon: searchCtrl.text.isNotEmpty
                 ? GestureDetector(
                     onTap: () {
@@ -171,7 +185,11 @@ class _SearchProductPageState extends State<SearchProductPage> {
                       _onSearchChanged('');
                       searchFocus.requestFocus();
                     },
-                    child: Icon(Icons.close, size: 20, color: Colors.grey.shade500),
+                    child: Icon(
+                      Icons.close,
+                      size: 20,
+                      color: Colors.grey.shade500,
+                    ),
                   )
                 : null,
             border: InputBorder.none,
@@ -210,7 +228,9 @@ class _SearchProductPageState extends State<SearchProductPage> {
   }
 
   Widget _buildHistorySection() {
-    final visible = showAllHistory ? searchHistory : searchHistory.take(5).toList();
+    final visible = showAllHistory
+        ? searchHistory
+        : searchHistory.take(5).toList();
 
     return Container(
       color: Colors.white,
@@ -227,7 +247,10 @@ class _SearchProductPageState extends State<SearchProductPage> {
                 const Spacer(),
                 TextButton(
                   onPressed: _clearHistory,
-                  child: Text('Xóa tất cả', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                  child: Text(
+                    'Xóa tất cả',
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                  ),
                 ),
               ],
             ),
@@ -242,11 +265,18 @@ class _SearchProductPageState extends State<SearchProductPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      showAllHistory ? 'Thu gọn' : 'Xem thêm (${searchHistory.length - 5})',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                      showAllHistory
+                          ? 'Thu gọn'
+                          : 'Xem thêm (${searchHistory.length - 5})',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 13,
+                      ),
                     ),
                     Icon(
-                      showAllHistory ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      showAllHistory
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
                       size: 18,
                       color: Colors.grey.shade500,
                     ),
@@ -335,7 +365,9 @@ class _SearchProductPageState extends State<SearchProductPage> {
             // Ảnh chiếm phần lớn
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
                 child: product.imageUrl != null
                     ? Image.network(
                         product.imageUrl!,
@@ -343,12 +375,24 @@ class _SearchProductPageState extends State<SearchProductPage> {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: Colors.grey.shade100,
-                          child: Center(child: Icon(Icons.fastfood, size: 40, color: Colors.grey.shade300)),
+                          child: Center(
+                            child: Icon(
+                              Icons.fastfood,
+                              size: 40,
+                              color: Colors.grey.shade300,
+                            ),
+                          ),
                         ),
                       )
                     : Container(
                         color: Colors.grey.shade100,
-                        child: Center(child: Icon(Icons.fastfood, size: 40, color: Colors.grey.shade300)),
+                        child: Center(
+                          child: Icon(
+                            Icons.fastfood,
+                            size: 40,
+                            color: Colors.grey.shade300,
+                          ),
+                        ),
                       ),
               ),
             ),
@@ -359,7 +403,10 @@ class _SearchProductPageState extends State<SearchProductPage> {
                 product.name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -391,8 +438,10 @@ class _SearchProductPageState extends State<SearchProductPage> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: searchResults.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) => _buildResultCard(searchResults[index]),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemBuilder: (context, index) =>
+                      _buildResultCard(searchResults[index]),
                 ),
         ),
       ],
@@ -422,7 +471,8 @@ class _SearchProductPageState extends State<SearchProductPage> {
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _imagePlaceholder(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            _imagePlaceholder(),
                       )
                     : _imagePlaceholder(),
               ),
@@ -435,7 +485,10 @@ class _SearchProductPageState extends State<SearchProductPage> {
                   children: [
                     Text(
                       product.name,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -447,7 +500,10 @@ class _SearchProductPageState extends State<SearchProductPage> {
                           const SizedBox(width: 3),
                           Text(
                             '${product.ratingDisplay} (${product.totalReviews})',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ],
                       ),
@@ -474,7 +530,11 @@ class _SearchProductPageState extends State<SearchProductPage> {
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.add_shopping_cart, size: 22, color: Colors.green.shade700),
+                  child: Icon(
+                    Icons.add_shopping_cart,
+                    size: 22,
+                    color: Colors.green.shade700,
+                  ),
                 ),
               ),
             ],
@@ -493,7 +553,11 @@ class _SearchProductPageState extends State<SearchProductPage> {
           const SizedBox(height: 16),
           Text(
             'Không tìm thấy sản phẩm',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
           ),
           const SizedBox(height: 6),
           Text(

@@ -34,13 +34,12 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
 
   Color get mainColor => Colors.green.shade800;
 
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       // Tìm item trong giỏ hàng
       final cartItem = cartController.cartItems.firstWhereOrNull(
-            (item) => item.productId == widget.product.id,
+        (item) => item.productId == widget.product.id,
       );
 
       final int soLuong = cartItem?.quantity ?? 0;
@@ -70,18 +69,19 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
         await cartController.addToCart(widget.product, 1);
 
         // Chạy animation nếu có
-        if (productController.animateAddToCart != null && widget.addBtnKey != null) {
-          productController.animateAddToCart!(widget.product, widget.addBtnKey!);
+        if (productController.animateAddToCart != null &&
+            widget.addBtnKey != null) {
+          productController.animateAddToCart!(
+            widget.product,
+            widget.addBtnKey!,
+          );
         }
       },
       child: Container(
         width: btnSize,
         height: btnSize,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: mainColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: mainColor, shape: BoxShape.circle),
         child: Icon(Icons.add, color: Colors.white, size: iconSize),
       ),
     );
@@ -94,10 +94,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: mainColor,
-          width: 1.5,
-        ),
+        border: Border.all(color: mainColor, width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -107,7 +104,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
             onTap: () async {
               if (cartItemId != null) {
                 final item = cartController.cartItems.firstWhere(
-                      (e) => e.id == cartItemId,
+                  (e) => e.id == cartItemId,
                 );
                 await cartController.updateQuantity(item, soLuong - 1);
               }
@@ -128,7 +125,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
             onTap: () async {
               if (cartItemId != null) {
                 final item = cartController.cartItems.firstWhere(
-                      (e) => e.id == cartItemId,
+                  (e) => e.id == cartItemId,
                 );
                 await cartController.updateQuantity(item, soLuong + 1);
               }
@@ -148,11 +145,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
       child: SizedBox(
         width: btnSize,
         height: btnSize,
-        child: Icon(
-          icon,
-          color: mainColor,
-          size: iconSize,
-        ),
+        child: Icon(icon, color: mainColor, size: iconSize),
       ),
     );
   }
@@ -161,7 +154,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
     try {
       final supabase = Supabase.instance.client;
       final response = await supabase
-          .from("option_groups")
+          .from("product_options")
           .select("id")
           .eq("product_id", widget.product.id)
           .limit(1);
@@ -188,9 +181,7 @@ class _ProductQuantityControlState extends State<ProductQuantityControl> {
             return Container(
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: ProductDetailPage(
                 product: widget.product,

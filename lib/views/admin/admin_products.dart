@@ -17,12 +17,25 @@ class _AdminProductsState extends State<AdminProducts> {
   final AdminController adminController = Get.find();
   final CategoryController categoryController = Get.put(CategoryController());
   final TextEditingController searchController = TextEditingController();
+  final TextEditingController minPriceController = TextEditingController();
+  final TextEditingController maxPriceController = TextEditingController();
   String searchQuery = '';
+  String? selectedCategoryId;
+  double? minPrice;
+  double? maxPrice;
 
   @override
   void initState() {
     super.initState();
     categoryController.fetchCategories();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    minPriceController.dispose();
+    maxPriceController.dispose();
+    super.dispose();
   }
 
   @override
@@ -33,7 +46,10 @@ class _AdminProductsState extends State<AdminProducts> {
         onPressed: () => _showProductDialog(),
         backgroundColor: Colors.green.shade700,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Thêm sản phẩm', style: TextStyle(color: Colors.white)),
+        label: const Text(
+          'Thêm sản phẩm',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Column(
         children: [
@@ -60,7 +76,10 @@ class _AdminProductsState extends State<AdminProducts> {
                         decoration: InputDecoration(
                           hintText: 'Tìm kiếm sản phẩm...',
                           hintStyle: TextStyle(color: Colors.grey.shade400),
-                          prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Colors.grey.shade500,
+                          ),
                           suffixIcon: searchQuery.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear, size: 20),
@@ -80,11 +99,17 @@ class _AdminProductsState extends State<AdminProducts> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.green.shade700, width: 1.5),
+                            borderSide: BorderSide(
+                              color: Colors.green.shade700,
+                              width: 1.5,
+                            ),
                           ),
                           filled: true,
                           fillColor: Colors.grey.shade50,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                         onChanged: (value) {
                           setState(() => searchQuery = value);
@@ -92,27 +117,36 @@ class _AdminProductsState extends State<AdminProducts> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Obx(() => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.inventory_2, size: 18, color: Colors.green.shade700),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${adminController.products.length} sản phẩm',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
+                    Obx(
+                      () => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.inventory_2,
+                              size: 18,
                               color: Colors.green.shade700,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Text(
+                              '${adminController.products.length} sản phẩm',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                     const SizedBox(width: 12),
                     IconButton(
                       onPressed: () => adminController.fetchProducts(),
@@ -120,10 +154,110 @@ class _AdminProductsState extends State<AdminProducts> {
                       tooltip: 'Tải lại',
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.grey.shade100,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Obx(
+                  () => Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey(selectedCategoryId ?? 'all_categories'),
+                          initialValue: selectedCategoryId,
+                          decoration: InputDecoration(
+                            hintText: 'Tất cả danh mục',
+                            prefixIcon: Icon(
+                              Icons.category_outlined,
+                              color: Colors.grey.shade500,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.green.shade700,
+                                width: 1.5,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('Tất cả danh mục'),
+                            ),
+                            ...categoryController.categories.map(
+                              (category) => DropdownMenuItem<String>(
+                                value: category.id,
+                                child: Text(category.name),
+                              ),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() => selectedCategoryId = value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildPriceField(
+                          controller: minPriceController,
+                          hintText: 'Giá từ',
+                          onChanged: (value) {
+                            setState(() => minPrice = _parsePrice(value));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildPriceField(
+                          controller: maxPriceController,
+                          hintText: 'Giá đến',
+                          onChanged: (value) {
+                            setState(() => maxPrice = _parsePrice(value));
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      IconButton(
+                        onPressed: _hasActiveFilters ? _clearFilters : null,
+                        icon: const Icon(Icons.filter_alt_off_outlined),
+                        tooltip: 'Xóa bộ lọc',
+                        style: IconButton.styleFrom(
+                          backgroundColor: _hasActiveFilters
+                              ? Colors.red.shade50
+                              : Colors.grey.shade100,
+                          foregroundColor: _hasActiveFilters
+                              ? Colors.red.shade600
+                              : Colors.grey.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -139,7 +273,26 @@ class _AdminProductsState extends State<AdminProducts> {
               var filteredProducts = adminController.products.toList();
               if (searchQuery.isNotEmpty) {
                 filteredProducts = filteredProducts
-                    .where((p) => p.name.toLowerCase().contains(searchQuery.toLowerCase()))
+                    .where(
+                      (p) => p.name.toLowerCase().contains(
+                        searchQuery.toLowerCase(),
+                      ),
+                    )
+                    .toList();
+              }
+              if (selectedCategoryId != null) {
+                filteredProducts = filteredProducts
+                    .where((p) => p.categoryId == selectedCategoryId)
+                    .toList();
+              }
+              if (minPrice != null) {
+                filteredProducts = filteredProducts
+                    .where((p) => p.price >= minPrice!)
+                    .toList();
+              }
+              if (maxPrice != null) {
+                filteredProducts = filteredProducts
+                    .where((p) => p.price <= maxPrice!)
                     .toList();
               }
 
@@ -148,15 +301,25 @@ class _AdminProductsState extends State<AdminProducts> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 80,
+                        color: Colors.grey.shade300,
+                      ),
                       const SizedBox(height: 16),
                       Text(
-                        searchQuery.isNotEmpty
+                        searchQuery.isNotEmpty ||
+                                selectedCategoryId != null ||
+                                minPrice != null ||
+                                maxPrice != null
                             ? 'Không tìm thấy sản phẩm'
                             : 'Chưa có sản phẩm nào',
-                        style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
-                      if (searchQuery.isEmpty) ...[
+                      if (!_hasActiveFilters) ...[
                         const SizedBox(height: 12),
                         ElevatedButton.icon(
                           onPressed: () => _showProductDialog(),
@@ -165,7 +328,9 @@ class _AdminProductsState extends State<AdminProducts> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade700,
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ],
@@ -207,6 +372,66 @@ class _AdminProductsState extends State<AdminProducts> {
     );
   }
 
+  bool get _hasActiveFilters =>
+      searchQuery.isNotEmpty ||
+      selectedCategoryId != null ||
+      minPrice != null ||
+      maxPrice != null;
+
+  Widget _buildPriceField({
+    required TextEditingController controller,
+    required String hintText,
+    required ValueChanged<String> onChanged,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.grey.shade400),
+        prefixIcon: Icon(Icons.payments_outlined, color: Colors.grey.shade500),
+        suffixText: 'đ',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.green.shade700, width: 1.5),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+      ),
+      onChanged: onChanged,
+    );
+  }
+
+  double? _parsePrice(String value) {
+    final normalized = value.trim().replaceAll(',', '.');
+    if (normalized.isEmpty) return null;
+    return double.tryParse(normalized);
+  }
+
+  void _clearFilters() {
+    searchController.clear();
+    minPriceController.clear();
+    maxPriceController.clear();
+    setState(() {
+      searchQuery = '';
+      selectedCategoryId = null;
+      minPrice = null;
+      maxPrice = null;
+    });
+  }
+
   Widget _buildProductCard(ProductModel product) {
     return Card(
       elevation: 0,
@@ -228,7 +453,8 @@ class _AdminProductsState extends State<AdminProducts> {
                     ? Image.network(
                         product.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildImagePlaceholder(),
                       )
                     : _buildImagePlaceholder(),
                 // Availability badge
@@ -236,14 +462,23 @@ class _AdminProductsState extends State<AdminProducts> {
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: product.isAvailable ? Colors.green.shade600 : Colors.red.shade600,
+                      color: product.isAvailable
+                          ? Colors.green.shade600
+                          : Colors.red.shade600,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       product.isAvailable ? 'Còn hàng' : 'Hết hàng',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -253,7 +488,10 @@ class _AdminProductsState extends State<AdminProducts> {
                     top: 8,
                     right: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.65),
                         borderRadius: BorderRadius.circular(8),
@@ -265,7 +503,11 @@ class _AdminProductsState extends State<AdminProducts> {
                           const SizedBox(width: 2),
                           Text(
                             product.ratingDisplay,
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -285,7 +527,10 @@ class _AdminProductsState extends State<AdminProducts> {
                 children: [
                   Text(
                     product.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -304,7 +549,10 @@ class _AdminProductsState extends State<AdminProducts> {
                     children: [
                       Text(
                         '${product.totalReviews} đánh giá',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                       const Spacer(),
                       _buildActionButton(
@@ -335,7 +583,11 @@ class _AdminProductsState extends State<AdminProducts> {
     return Container(
       color: Colors.grey.shade100,
       child: Center(
-        child: Icon(Icons.image_outlined, size: 48, color: Colors.grey.shade300),
+        child: Icon(
+          Icons.image_outlined,
+          size: 48,
+          color: Colors.grey.shade300,
+        ),
       ),
     );
   }
@@ -400,7 +652,9 @@ class _AdminProductsState extends State<AdminProducts> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Xóa'),
           ),

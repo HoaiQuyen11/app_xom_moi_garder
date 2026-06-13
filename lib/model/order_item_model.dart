@@ -24,7 +24,10 @@ class OrderItemModel {
   });
 
   double get optionsExtraPrice {
-    return options.fold(0.0, (sum, o) => sum + ((o['price'] as num?)?.toDouble() ?? 0));
+    return options.fold(
+      0.0,
+      (sum, o) => sum + ((o['price'] as num?)?.toDouble() ?? 0),
+    );
   }
 
   double get subtotal => (price + optionsExtraPrice) * quantity;
@@ -45,7 +48,9 @@ class OrderItemModel {
     final rawOptions = json['options'];
     List<Map<String, dynamic>> opts = [];
     if (rawOptions is List) {
-      opts = rawOptions.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      opts = rawOptions
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
     }
 
     return OrderItemModel(
